@@ -732,6 +732,10 @@ ENTRY(__switch_to)
 	ldr	r7, [r7, #TSK_STACK_CANARY]
 #endif
 #if defined(CONFIG_HAS_TLS_REG)
+#if defined(CONFIG_TEGRA_ERRATA_657451)
+	and	r4, r3, #(1<<20)
+	orr	r3, r3, r4, lsr #20
+#endif
 	mcr	p15, 0, r3, c13, c0, 3		@ set TLS register
 #elif !defined(CONFIG_TLS_REG_EMUL)
 	mov	r4, #0xffff0fff
@@ -1006,10 +1010,18 @@ __kuser_get_tls:				@ 0xffff0fe0
 	ldr	r0, [pc, #(16 - 8)]		@ TLS stored at 0xffff0ff0
 #else
 	mrc	p15, 0, r0, c13, c0, 3		@ read TLS register
+#if defined(CONFIG_TEGRA_ERRATA_657451)
+	bfi	r0, r0, #20, #1
+	bic	r0, r0, #1
+#endif
 #endif
 	usr_ret	lr
 
+#if defined(CONFIG_TEGRA_ERRATA_657451)
+	.rep	3
+#else
 	.rep	5
+#endif
 	.word	0			@ pad up to __kuser_helper_version
 	.endr
 
