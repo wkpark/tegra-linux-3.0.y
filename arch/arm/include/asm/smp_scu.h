@@ -7,6 +7,7 @@
 
 #ifndef __ASSEMBLER__
 unsigned int scu_get_core_count(void __iomem *);
+void scu_inv_cpu(void __iomem *, int cpu);
 void scu_enable(void __iomem *);
 int scu_power_mode(void __iomem *, unsigned int);
 #endif
