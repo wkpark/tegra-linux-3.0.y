@@ -262,10 +262,9 @@ void __init gic_cascade_irq(unsigned int gic_nr, unsigned int irq)
 	irq_set_chained_handler(irq, gic_handle_cascade_irq);
 }
 
-static void __init gic_dist_init(struct gic_chip_data *gic,
-	unsigned int irq_start)
+static unsigned int _gic_dist_init(struct gic_chip_data *gic)
 {
-	unsigned int gic_irqs, irq_limit, i;
+	unsigned int gic_irqs, i;
 	void __iomem *base = gic->dist_base;
 	u32 cpumask = 1 << smp_processor_id();
 
@@ -308,6 +307,52 @@ static void __init gic_dist_init(struct gic_chip_data *gic,
 	for (i = 32; i < gic_irqs; i += 32)
 		writel_relaxed(0xffffffff, base + GIC_DIST_ENABLE_CLEAR + i * 4 / 32);
 
+	return gic_irqs;
+}
+
+#ifdef CONFIG_PM
+void gic_dist_restore(unsigned int gic_nr)
+{
+	unsigned int gic_irqs, irq_limit, i;
+	struct gic_chip_data *gic;
+
+	BUG_ON(gic_nr >= MAX_GIC_NR);
+
+	gic = &gic_data[gic_nr];
+
+	gic_irqs = _gic_dist_init(gic);
+	/*
+	 * Limit number of interrupts registered to the platform maximum
+	 */
+	irq_limit = gic->irq_offset + gic_irqs;
+	if (WARN_ON(irq_limit > NR_IRQS))
+		irq_limit = NR_IRQS;
+
+	writel_relaxed(1, gic_data[gic_nr].dist_base + GIC_DIST_CTRL);
+	writel_relaxed(0xf0, gic_data[gic_nr].cpu_base + GIC_CPU_PRIMASK);
+	writel_relaxed(1, gic_data[gic_nr].cpu_base + GIC_CPU_CTRL);
+
+	/* unmask all enabled IRQs, to restore the system to a sane state */
+	for (i = 0; i < irq_limit; i++) {
+		if (irq_get_chip_data(i)==&gic_data[gic_nr]) {
+			struct irq_desc *desc = irq_to_desc(i);
+			if (desc && !irqd_irq_disabled(&desc->irq_data))
+				gic_unmask_irq(&desc->irq_data);
+		}
+	}
+
+}
+#endif
+
+
+static void __init gic_dist_init(struct gic_chip_data *gic,
+	unsigned int irq_start)
+{
+	unsigned int gic_irqs, irq_limit, i;
+	void __iomem *base = gic->dist_base;
+
+	gic_irqs = _gic_dist_init(gic);
+
 	/*
 	 * Limit number of interrupts registered to the platform maximum
 	 */
@@ -325,6 +370,14 @@ static void __init gic_dist_init(struct gic_chip_data *gic,
 	}
 
 	writel_relaxed(1, base + GIC_DIST_CTRL);
+}
+
+void gic_dist_exit(unsigned int gic_nr)
+{
+	if (gic_nr >= MAX_GIC_NR)
+		BUG();
+
+	writel(0, gic_data[gic_nr].dist_base + GIC_DIST_CTRL);
 }
 
 static void __cpuinit gic_cpu_init(struct gic_chip_data *gic)
