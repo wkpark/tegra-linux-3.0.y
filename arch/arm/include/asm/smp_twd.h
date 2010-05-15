@@ -24,5 +24,8 @@ extern void __iomem *twd_base;
 
 int twd_timer_ack(void);
 void twd_timer_setup(struct clock_event_device *);
+#ifdef CONFIG_USE_ARM_TWD_PRESCALER
+void twd_set_prescaler(void*);
+#endif
 
 #endif
