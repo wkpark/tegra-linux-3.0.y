@@ -1265,7 +1265,7 @@ MODULE_LICENSE ("GPL");
 #define	PLATFORM_DRIVER		ehci_hcd_msp_driver
 #endif
 
-#ifdef CONFIG_USB_EHCI_TEGRA
+#ifdef CONFIG_ARCH_TEGRA
 #include "ehci-tegra.c"
 #define PLATFORM_DRIVER		tegra_ehci_driver
 #endif

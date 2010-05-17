@@ -145,6 +145,9 @@ struct ehci_hcd {			/* one per controller */
 	unsigned		fs_i_thresh:1;	/* Intel iso scheduling */
 	unsigned		use_dummy_qh:1;	/* AMD Frame List table quirk*/
 	unsigned		has_synopsys_hc_bug:1; /* Synopsys HC */
+	unsigned		host_reinited:1; /* tegra */
+	unsigned		host_resumed:1; /* tegra */
+	struct work_struct	irq_work; /* tegra irq work for power control*/
 
 	/* required for usb32 quirk */
 	#define OHCI_CTRL_HCFS          (3 << 6)
