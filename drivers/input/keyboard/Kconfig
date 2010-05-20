@@ -385,6 +385,13 @@ config KEYBOARD_TEGRA
 	  To compile this driver as a module, choose M here: the
 	  module will be called tegra-kbc.
 
+config KEYBOARD_TEGRA_NVEC
+	boolean "NVIDIA Tegra NvEc-compliant embedded controller keyboard"
+	depends on ARCH_TEGRA && TEGRA_NVEC
+	help
+	  Say Y here to enable keyboard input for keyboards attached to an
+	  NvEc-compliant embedded controller
+
 config KEYBOARD_OPENCORES
 	tristate "OpenCores Keyboard Controller"
 	help
