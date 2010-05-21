@@ -160,6 +160,9 @@ struct sdhci_host {
 #define SDHCI_TUNING_MODE_1	0
 	struct timer_list	tuning_timer;	/* Timer for tuning */
 
+#ifdef CONFIG_EMBEDDED_MMC_START_OFFSET
+	unsigned int		start_offset;	/* Zero-offset for MBR */
+#endif
 	unsigned long private[0] ____cacheline_aligned;
 };
 #endif /* __SDHCI_H */

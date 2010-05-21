@@ -140,6 +140,10 @@ struct mmc_host_ops {
 	int	(*start_signal_voltage_switch)(struct mmc_host *host, struct mmc_ios *ios);
 	int	(*execute_tuning)(struct mmc_host *host);
 	void	(*enable_preset_value)(struct mmc_host *host, bool enable);
+
+#ifdef CONFIG_EMBEDDED_MMC_START_OFFSET
+	unsigned int (*get_host_offset)(struct mmc_host *host);
+#endif
 };
 
 struct mmc_card;
