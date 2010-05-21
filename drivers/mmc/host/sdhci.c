@@ -1267,9 +1267,12 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	host->mrq = mrq;
 
 	/* If polling, assume that the card is always present. */
-	if (host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION)
-		present = true;
-	else
+	if (host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION) {
+		if (host->ops->card_detect)
+			present = host->ops->card_detect(host);
+		else
+			present = true;
+	} else
 		present = sdhci_readl(host, SDHCI_PRESENT_STATE) &
 				SDHCI_CARD_PRESENT;
 
@@ -2593,8 +2596,10 @@ int sdhci_add_host(struct sdhci_host *host)
 		mmc->caps |= MMC_CAP_SDIO_IRQ;
 
 	if ((host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION) &&
-	    mmc_card_is_removable(mmc))
-		mmc->caps |= MMC_CAP_NEEDS_POLL;
+	    mmc_card_is_removable(mmc)) {
+		if (!host->ops->card_detect)
+			mmc->caps |= MMC_CAP_NEEDS_POLL;
+	}
 
 	if (host->quirks & SDHCI_QUIRK_RUNTIME_DISABLE) {
 		mmc->caps |= MMC_CAP_DISABLE;
@@ -2918,10 +2923,18 @@ EXPORT_SYMBOL_GPL(sdhci_free_host);
 void sdhci_card_detect_callback(struct sdhci_host *host)
 {
 	unsigned long flags;
+	int present;
 
 	spin_lock_irqsave(&host->lock, flags);
 
-	if (!(sdhci_readl(host, SDHCI_PRESENT_STATE) & SDHCI_CARD_PRESENT)) {
+	if ((host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION) &&
+	    host->ops->card_detect)
+		present = host->ops->card_detect(host);
+	else
+		present = sdhci_readl(host, SDHCI_PRESENT_STATE) &
+			SDHCI_CARD_PRESENT;
+
+	if (!present) {
 		if (host->mrq) {
 			printk(KERN_ERR "%s: Card removed during transfer!\n",
 				mmc_hostname(host->mmc));
