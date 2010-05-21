@@ -68,6 +68,14 @@ config MMC_SDHCI_PCI
 
 	  If unsure, say N.
 
+config MMC_SDHCI_TEGRA
+	boolean "SDHCI support on NVIDIA Tegra SoCs"
+	depends on MMC_SDHCI && ARCH_TEGRA
+	default MMC_SDHCI
+	help
+	  This enables the internal SDHCI-compatible interfaces in NVIDIA
+	  Tegra SoCs
+
 config MMC_RICOH_MMC
 	bool "Ricoh MMC Controller Disabler  (EXPERIMENTAL)"
 	depends on MMC_SDHCI_PCI
@@ -150,16 +158,6 @@ config MMC_SDHCI_DOVE
 	help
 	  This selects the Secure Digital Host Controller Interface in
 	  Marvell's Dove SoC.
-
-	  If unsure, say N.
-
-config MMC_SDHCI_TEGRA
-	bool "SDHCI platform support for the Tegra SD/MMC Controller"
-	depends on MMC_SDHCI_PLTFM && ARCH_TEGRA
-	select MMC_SDHCI_IO_ACCESSORS
-	help
-	  This selects the Tegra SD/MMC controller. If you have a Tegra
-	  platform with SD or MMC devices, say Y or M here.
 
 	  If unsure, say N.
 
