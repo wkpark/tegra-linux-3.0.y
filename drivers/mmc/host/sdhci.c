@@ -500,6 +500,30 @@ static int sdhci_adma_table_pre(struct sdhci_host *host,
 			len -= offset;
 		}
 
+		if ((len == 0x10000) &&
+		    (host->quirks & SDHCI_QUIRK_NO_64KB_ADMA)) {
+			len = 1 << 15;
+
+			desc[7] = (addr >> 24) & 0xff;
+			desc[6] = (addr >> 16) & 0xff;
+			desc[5] = (addr >> 8) & 0xff;
+			desc[4] = (addr >> 0) & 0xff;
+
+			desc[3] = (len >> 8) & 0xff;
+			desc[2] = (len >> 0) & 0xff;
+
+			desc[1] = 0x00;
+			desc[0] = 0x21; /* tran, valid */
+
+			desc += 8;
+			addr += len;
+		}
+
+		desc[7] = (addr >> 24) & 0xff;
+		desc[6] = (addr >> 16) & 0xff;
+		desc[5] = (addr >> 8) & 0xff;
+		desc[4] = (addr >> 0) & 0xff;
+
 		BUG_ON(len > 65536);
 
 		/* tran, valid */
@@ -1342,6 +1366,16 @@ static void sdhci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
 	else
 		ctrl &= ~SDHCI_CTRL_HISPD;
 
+	/* Tegra controllers often fail to detect high-speed cards when
+	 * CTRL_HISPD is programmed
+	 */
+	if (!(host->quirks & SDHCI_QUIRK_BROKEN_CTRL_HISPD)) {
+		if (ios->timing == MMC_TIMING_SD_HS)
+			ctrl |= SDHCI_CTRL_HISPD;
+		else
+			ctrl &= ~SDHCI_CTRL_HISPD;
+	}
+
 	if (host->version >= SDHCI_SPEC_300) {
 		u16 clk, ctrl_2;
 		unsigned int clock;
@@ -1445,15 +1479,15 @@ static int check_ro(struct sdhci_host *host)
 		is_readonly = 0;
 	else if (host->ops->get_ro)
 		is_readonly = host->ops->get_ro(host);
-	else
+	else if (!(host->quirks & SDHCI_QUIRK_BROKEN_WRITE_PROTECT))
 		is_readonly = !(sdhci_readl(host, SDHCI_PRESENT_STATE)
 				& SDHCI_WRITE_PROTECT);
+	else
+		is_readonly = 0;
 
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	/* This quirk needs to be replaced by a callback-function later */
-	return host->quirks & SDHCI_QUIRK_INVERTED_WRITE_PROTECT ?
-		!is_readonly : is_readonly;
+	return is_readonly;
 }
 
 #define SAMPLE_COUNT	5
@@ -1495,6 +1529,16 @@ static void sdhci_enable_sdio_irq(struct mmc_host *mmc, int enable)
 		sdhci_unmask_irqs(host, SDHCI_INT_CARD_INT);
 	else
 		sdhci_mask_irqs(host, SDHCI_INT_CARD_INT);
+
+	if (host->quirks & SDHCI_QUIRK_ENABLE_INTERRUPT_AT_BLOCK_GAP) {
+		u8 gap_ctrl = sdhci_readb(host, SDHCI_BLOCK_GAP_CONTROL);
+		if (enable)
+			gap_ctrl |= 0x8;
+		else
+			gap_ctrl &= ~0x8;
+		sdhci_writeb(host, gap_ctrl, SDHCI_BLOCK_GAP_CONTROL);
+	}
+
 out:
 	mmiowb();
 
@@ -2341,9 +2385,11 @@ int sdhci_add_host(struct sdhci_host *host)
 
 	sdhci_reset(host, SDHCI_RESET_ALL);
 
-	host->version = sdhci_readw(host, SDHCI_HOST_VERSION);
-	host->version = (host->version & SDHCI_SPEC_VER_MASK)
-				>> SDHCI_SPEC_VER_SHIFT;
+	if (!(host->quirks & SDHCI_QUIRK_BROKEN_SPEC_VERSION)) {
+		host->version = sdhci_readw(host, SDHCI_HOST_VERSION);
+		host->version = (host->version & SDHCI_SPEC_VER_MASK)
+			>> SDHCI_SPEC_VER_SHIFT;
+	}
 	if (host->version > SDHCI_SPEC_300) {
 		printk(KERN_ERR "%s: Unknown controller version (%d). "
 			"You may experience problems.\n", mmc_hostname(mmc),
@@ -2486,7 +2532,7 @@ int sdhci_add_host(struct sdhci_host *host)
 	} else
 		mmc->f_min = host->max_clk / SDHCI_MAX_DIV_SPEC_200;
 
-	mmc->caps |= MMC_CAP_SDIO_IRQ | MMC_CAP_ERASE | MMC_CAP_CMD23;
+	mmc->caps |= MMC_CAP_ERASE | MMC_CAP_CMD23;
 
 	if (host->quirks & SDHCI_QUIRK_MULTIBLOCK_READ_ACMD12)
 		host->flags |= SDHCI_AUTO_CMD12;
@@ -2513,6 +2559,9 @@ int sdhci_add_host(struct sdhci_host *host)
 
 	if (caps[0] & SDHCI_CAN_DO_HISPD)
 		mmc->caps |= MMC_CAP_SD_HIGHSPEED | MMC_CAP_MMC_HIGHSPEED;
+
+	if (!(host->quirks & SDHCI_QUIRK_NO_SDIO_IRQ))
+		mmc->caps |= MMC_CAP_SDIO_IRQ;
 
 	if ((host->quirks & SDHCI_QUIRK_BROKEN_CARD_DETECTION) &&
 	    mmc_card_is_removable(mmc))
