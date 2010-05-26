@@ -1043,8 +1043,9 @@ static int __cpufreq_remove_dev(struct sys_device *sys_dev)
 #ifdef CONFIG_SMP
 
 #ifdef CONFIG_HOTPLUG_CPU
-	strncpy(per_cpu(cpufreq_cpu_governor, cpu), data->governor->name,
-			CPUFREQ_NAME_LEN);
+	if (data->governor)
+		strncpy(per_cpu(cpufreq_cpu_governor, cpu),
+			data->governor->name, CPUFREQ_NAME_LEN);
 #endif
 
 	/* if we have other CPUs still registered, we need to unlink them,
@@ -1068,8 +1069,9 @@ static int __cpufreq_remove_dev(struct sys_device *sys_dev)
 				continue;
 			pr_debug("removing link for cpu %u\n", j);
 #ifdef CONFIG_HOTPLUG_CPU
-			strncpy(per_cpu(cpufreq_cpu_governor, j),
-				data->governor->name, CPUFREQ_NAME_LEN);
+			if (data->governor)
+				strncpy(per_cpu(cpufreq_cpu_governor, j),
+					data->governor->name, CPUFREQ_NAME_LEN);
 #endif
 			cpu_sys_dev = get_cpu_sysdev(j);
 			kobj = &cpu_sys_dev->kobj;
