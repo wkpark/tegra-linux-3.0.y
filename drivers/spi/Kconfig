@@ -253,6 +253,12 @@ config SPI_OC_TINY
 	help
 	  This is the driver for OpenCores tiny SPI master controller.
 
+config SPI_TEGRA
+	boolean "SPI driver for NVIDIA Tegra SoCs"
+	depends on ARCH_TEGRA
+	help
+	  Enables the integrated SPI controllers on NVIDIA Tegra SoCs
+
 config SPI_OMAP_UWIRE
 	tristate "OMAP1 MicroWire"
 	depends on ARCH_OMAP1
