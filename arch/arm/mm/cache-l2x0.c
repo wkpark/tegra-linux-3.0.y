@@ -320,13 +320,11 @@ static void l2x0_disable(void)
 	spin_unlock_irqrestore(&l2x0_lock, flags);
 }
 
-void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
+void __l2x0_init(__u32 aux_val, __u32 aux_mask)
 {
 	__u32 aux;
 	__u32 way_size = 0;
 	const char *type;
-
-	l2x0_base = base;
 
 	l2x0_cache_id = readl_relaxed(l2x0_base + L2X0_CACHE_ID);
 	aux = readl_relaxed(l2x0_base + L2X0_AUX_CTRL);
@@ -380,6 +378,22 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 		writel_relaxed(1, l2x0_base + L2X0_CTRL);
 	}
 
+	pr_info_once("%s cache controller enabled\n", type);
+	pr_info_once("l2x0: %d ways, CACHE_ID 0x%08x, AUX_CTRL 0x%08x, Cache size: %d B\n",
+			l2x0_ways, l2x0_cache_id, aux, l2x0_size);
+}
+
+static void l2x0_enable(void)
+{
+	__l2x0_init(0, ~0ul);
+}
+
+void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
+{
+	l2x0_base = base;
+
+	__l2x0_init(aux_val, aux_mask);
+
 	outer_cache.inv_range = l2x0_inv_range;
 	outer_cache.clean_range = l2x0_clean_range;
 	outer_cache.flush_range = l2x0_flush_range;
@@ -387,9 +401,6 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 	outer_cache.flush_all = l2x0_flush_all;
 	outer_cache.inv_all = l2x0_inv_all;
 	outer_cache.disable = l2x0_disable;
+	outer_cache.enable = l2x0_enable;
 	outer_cache.set_debug = l2x0_set_debug;
-
-	printk(KERN_INFO "%s cache controller enabled\n", type);
-	printk(KERN_INFO "l2x0: %d ways, CACHE_ID 0x%08x, AUX_CTRL 0x%08x, Cache size: %d B\n",
-			l2x0_ways, l2x0_cache_id, aux, l2x0_size);
 }
