@@ -140,7 +140,6 @@ static int mmc_decode_csd(struct mmc_card *card)
 		 * values. To avoid getting tripped by buggy cards,
 		 * we assume those fixed values ourselves.
 		 */
-		mmc_card_set_blockaddr(card);
 
 		csd->tacc_ns	 = 0; /* Unused */
 		csd->tacc_clks	 = 0; /* Unused */
@@ -918,6 +917,11 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 
 		card->type = MMC_TYPE_SD;
 		memcpy(card->raw_cid, cid, sizeof(card->raw_cid));
+		/* Set the block addressing mode based on the
+		 * access mode bit in the OCR register */
+		if (rocr & MMC_CARD_ACCESS_MODE)
+			mmc_card_set_blockaddr(card);
+		host->card = card;
 	}
 
 	/*
@@ -1001,6 +1005,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 free_card:
 	if (!oldcard)
 		mmc_remove_card(card);
+	host->card = NULL;
 
 	return err;
 }
