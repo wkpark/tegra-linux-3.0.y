@@ -23,6 +23,8 @@
 
 #include "uvcvideo.h"
 
+#define UVC_Q_WAITON_TIMEOUT 250 /* mSec */
+
 /* ------------------------------------------------------------------------
  * Video buffers queue management.
  *
@@ -315,10 +317,11 @@ static int uvc_queue_waiton(struct uvc_buffer *buf, int nonblocking)
 			? 0 : -EAGAIN;
 	}
 
-	return wait_event_interruptible(buf->wait,
+	return wait_event_interruptible_timeout(buf->wait,
 		buf->state != UVC_BUF_STATE_QUEUED &&
 		buf->state != UVC_BUF_STATE_ACTIVE &&
-		buf->state != UVC_BUF_STATE_READY);
+		buf->state != UVC_BUF_STATE_READY &&
+		UVC_Q_WAITON_TIMEOUT);
 }
 
 /*
