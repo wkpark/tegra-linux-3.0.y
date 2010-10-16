@@ -1277,6 +1277,7 @@ static int fsl_get_frame(struct usb_gadget *gadget)
 	return (int)(fsl_readl(&dr_regs->frindex) & USB_FRINDEX_MASKS);
 }
 
+#ifndef CONFIG_USB_ANDROID
 /*-----------------------------------------------------------------------
  * Tries to wake up the host connected to this gadget
  -----------------------------------------------------------------------*/
@@ -1298,6 +1299,7 @@ static int fsl_wakeup(struct usb_gadget *gadget)
 	fsl_writel(portsc, &dr_regs->portsc1);
 	return 0;
 }
+#endif
 
 static int can_pullup(struct fsl_udc *udc)
 {
@@ -2137,7 +2139,7 @@ static void reset_irq(struct fsl_udc *udc)
  */
 static void fsl_udc_charger_detection(struct work_struct* work)
 {
-	struct fsl_udc *udc = container_of (work, struct fsl_udc, work);
+	struct fsl_udc *udc = container_of (work, struct fsl_udc, work.work);
 
 	/* check for the platform charger detection */
 	if (platform_udc_charger_detection()) {
