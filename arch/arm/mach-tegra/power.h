@@ -47,6 +47,7 @@
 #define TEGRA_IRAM_CODE_SIZE		SZ_4K
 
 #ifndef __ASSEMBLY__
+u64 tegra_rtc_read_ms(void);
 void tegra_lp2_set_trigger(unsigned long cycles);
 void __cortex_a9_save(unsigned int mode);
 void tegra_lp2_startup(void);
