@@ -50,24 +50,24 @@ enum {
 	HOST1X_SYNC_SYNCPT_THRESH_INT_DISABLE = 0x60
 };
 
-static void (*gic_mask_irq)(struct irq_data *d) = NULL;
-static void (*gic_unmask_irq)(struct irq_data *d) = NULL;
+static void (*tegra_gic_mask_irq)(struct irq_data *d);
+static void (*tegra_gic_unmask_irq)(struct irq_data *d);
 
-#define irq_to_ictlr(irq) (((irq)-32) >> 5)
+#define irq_to_ictlr(irq) (((irq) - 32) >> 5)
 static void __iomem *tegra_ictlr_base = IO_ADDRESS(TEGRA_PRIMARY_ICTLR_BASE);
-#define ictlr_to_virt(ictlr) (tegra_ictlr_base + (ictlr)*0x100)
+#define ictlr_to_virt(ictlr) (tegra_ictlr_base + (ictlr) * 0x100)
 
 static void tegra_mask(struct irq_data *d)
 {
 	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(d->irq));
-	gic_mask_irq(d);
-	writel(1<<(d->irq&31), addr+ICTLR_CPU_IER_CLR);
+	tegra_gic_mask_irq(d);
+	writel(1 << (d->irq & 31), addr+ICTLR_CPU_IER_CLR);
 }
 
 static void tegra_unmask(struct irq_data *d)
 {
 	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(d->irq));
-	gic_unmask_irq(d);
+	tegra_gic_unmask_irq(d);
 	writel(1<<(d->irq&31), addr+ICTLR_CPU_IER_SET);
 }
 
@@ -161,8 +161,8 @@ void __init tegra_init_irq(void)
 		IO_ADDRESS(TEGRA_ARM_PERIF_BASE + 0x100));
 
 	gic = irq_get_chip(29);
-	gic_unmask_irq = gic->irq_unmask;
-	gic_mask_irq = gic->irq_mask;
+	tegra_gic_unmask_irq = gic->irq_unmask;
+	tegra_gic_mask_irq = gic->irq_mask;
 	tegra_irq.irq_ack = gic->irq_ack;
 #ifdef CONFIG_SMP
 	tegra_irq.irq_set_affinity = gic->irq_set_affinity;
