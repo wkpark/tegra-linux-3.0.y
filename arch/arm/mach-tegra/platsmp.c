@@ -80,7 +80,6 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 	asm volatile ("mcr p15, 0, %0, c15, c0, 0" : : "r" (reg) : "cc");
 #endif
 
-	trace_hardirqs_off();
 	gic_secondary_init(0);
 	/*
 	 * Synchronise with the boot thread.
