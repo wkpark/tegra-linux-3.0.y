@@ -307,12 +307,6 @@ void tegra_gpio_resume(void)
 	}
 
 	local_irq_restore(flags);
-
-	for (i=INT_GPIO_BASE; i<(INT_GPIO_BASE+ARCH_NR_GPIOS); i++) {
-		struct irq_desc *desc = irq_to_desc(i);
-		if (!desc || irqd_is_wakeup_set(&desc->irq_data)) continue;
-		enable_irq(i);
-	}
 }
 
 void tegra_gpio_suspend(void)
@@ -320,23 +314,11 @@ void tegra_gpio_suspend(void)
 	unsigned long flags;
 	int b, p, i;
 
-
-	for (i=INT_GPIO_BASE; i<(INT_GPIO_BASE+ARCH_NR_GPIOS); i++) {
-		struct irq_desc *desc = irq_to_desc(i);
-		if (!desc) continue;
-		if (irqd_is_wakeup_set(&desc->irq_data)) {
-			int gpio = i - INT_GPIO_BASE;
-			pr_debug("gpio %d.%d is wakeup\n", gpio/8, gpio&7);
-			continue;
-                }
-		disable_irq(i);
-	}
-
 	local_irq_save(flags);
-	for (b=0; b<ARRAY_SIZE(tegra_gpio_banks); b++) {
+	for (b = 0; b < ARRAY_SIZE(tegra_gpio_banks); b++) {
 		struct tegra_gpio_bank *bank = &tegra_gpio_banks[b];
 
-		for (p=0; p<ARRAY_SIZE(bank->oe); p++) {
+		for (p = 0; p < ARRAY_SIZE(bank->oe); p++) {
 			unsigned int gpio = (b<<5) | (p<<3);
 			bank->cnf[p] = __raw_readl(GPIO_CNF(gpio));
 			bank->out[p] = __raw_readl(GPIO_OUT(gpio));
