@@ -13,11 +13,8 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+#include <linux/kernel.h>
 #include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/jiffies.h>
 #include <linux/smp.h>
 #include <linux/io.h>
 #include <linux/completion.h>
@@ -25,9 +22,6 @@
 #include <linux/cpu.h>
 #include <linux/slab.h>
 
-#include <asm/cacheflush.h>
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
 #include <asm/tlbflush.h>
 #include <asm/smp_scu.h>
 #include <asm/cpu.h>
@@ -94,16 +88,8 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 
 int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
 {
-	unsigned long old_boot_vector;
 	unsigned long boot_vector;
-	unsigned long timeout;
 	u32 reg;
-
-	/*
-	 * set synchronisation state between this boot processor
-	 * and the secondary one
-	 */
-	spin_lock(&boot_lock);
 
 	/* set the reset vector to point to the secondary_startup routine */
 #ifdef CONFIG_HOTPLUG_CPU
@@ -115,7 +101,6 @@ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
 
 	smp_wmb();
 
-	old_boot_vector = readl(EVP_CPU_RESET_VECTOR);
 	writel(boot_vector, EVP_CPU_RESET_VECTOR);
 
 	/* enable cpu clock on cpu */
@@ -127,22 +112,6 @@ int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
 
 	/* unhalt the cpu */
 	writel(0, IO_ADDRESS(TEGRA_FLOW_CTRL_BASE) + 0x14 + 0x8*(cpu-1));
-
-	timeout = jiffies + HZ;
-	while (time_before(jiffies, timeout)) {
-		if (readl(EVP_CPU_RESET_VECTOR) != boot_vector)
-			break;
-		udelay(10);
-	}
-
-	/* put the old boot vector back */
-	writel(old_boot_vector, EVP_CPU_RESET_VECTOR);
-
-	/*
-	 * now the secondary core is starting up let it run its
-	 * calibrations, then wait for it to finish
-	 */
-	spin_unlock(&boot_lock);
 
 	return 0;
 }
