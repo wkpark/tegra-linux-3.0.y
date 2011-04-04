@@ -231,6 +231,9 @@ static int __die(const char *str, int err, struct thread_info *thread, struct pt
 	static int die_counter;
 	int ret;
 
+#if defined(CONFIG_MACH_STAR)
+	set_default_loglevel(); /* 20100916 taewan.kim@lge.com set default loglevel */
+#endif
 	printk(KERN_EMERG "Internal error: %s: %x [#%d]" S_PREEMPT S_SMP "\n",
 	       str, err, ++die_counter);
 

@@ -65,6 +65,7 @@ spi_s3c24xx_hw-$(CONFIG_SPI_S3C24XX_FIQ) += spi_s3c24xx_fiq.o
 # SPI protocol drivers (device/link on bus)
 obj-$(CONFIG_SPI_SPIDEV)	+= spidev.o
 obj-$(CONFIG_SPI_TLE62X0)	+= tle62x0.o
+obj-$(CONFIG_SPI_TEGRA)	+= ifx_n721_spi.o
 # 	... add above this line ...
 
 # SPI slave controller drivers (upstream link)
