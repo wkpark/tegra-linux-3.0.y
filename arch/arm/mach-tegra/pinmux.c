@@ -501,11 +501,11 @@ static int dbg_pinmux_show(struct seq_file *s, void *unused)
 		} 
 		else 
 		{
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_START]
+			//20100725  for pinmux setting while sleep [LGE_START]
 			//mux = (pg_readl(pingroups[i].mux_reg) >>
 			//       pingroups[i].mux_bit) & 0x3;
 			mux = get_reg_data(i, PIN_MUX_CTL);
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_END]
+			//20100725  for pinmux setting while sleep [LGE_END]
 			if (pingroups[i].funcs[mux] == TEGRA_MUX_RSVD) {
 				seq_printf(s, "TEGRA_MUX_RSVD%1lu", mux+1);
 				len = 5;
@@ -522,11 +522,11 @@ static int dbg_pinmux_show(struct seq_file *s, void *unused)
 			seq_printf(s, "TEGRA_PUPD_NORMAL");
 			len = strlen("NORMAL");
 		} else {
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_START]
+			//20100725  for pinmux setting while sleep [LGE_START]
 			//pupd = (pg_readl(pingroups[i].pupd_reg) >>
 			//	pingroups[i].pupd_bit) & 0x3;
 			pupd = get_reg_data(i, PULLUPDOWN);
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_END]
+			//20100725  for pinmux setting while sleep [LGE_END]
 			seq_printf(s, "TEGRA_PUPD_%s", pupd_name(pupd));
 			len = strlen(pupd_name(pupd));
 		}
@@ -535,11 +535,11 @@ static int dbg_pinmux_show(struct seq_file *s, void *unused)
 		if (pingroups[i].tri_reg < 0) {
 			seq_printf(s, "TEGRA_TRI_NORMAL");
 		} else {
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_START]
+			//20100725  for pinmux setting while sleep [LGE_START]
 			//tri = (pg_readl(pingroups[i].tri_reg) >>
 			//       pingroups[i].tri_bit) & 0x1;
 			tri = get_reg_data(i, TRISTATE);
-			//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_END]
+			//20100725  for pinmux setting while sleep [LGE_END]
 			seq_printf(s, "TEGRA_TRI_%s", tri_name(tri));
 		}
 		seq_printf(s, "},\n");
@@ -559,7 +559,7 @@ static const struct file_operations debug_fops = {
 	.release	= single_release,
 };
 
-//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_START]
+//20100725  for pinmux setting while sleep [LGE_START]
 #include <asm/uaccess.h>
 #include <linux/io.h>
 
@@ -949,14 +949,14 @@ static const struct file_operations fops_PUPD_enable = {
 };
 
 
-//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_END]
+//20100725  for pinmux setting while sleep [LGE_END]
 
 static int __init tegra_pinmux_debuginit(void)
 {
 	(void) debugfs_create_file("tegra_pinmux", S_IRUGO,
 					NULL, NULL, &debug_fops);
 	
-	//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_START]
+	//20100725  for pinmux setting while sleep [LGE_START]
 	pg_info *buff;
 	buff =(pg_info *) kmalloc(sizeof(pg_info),GFP_KERNEL);
 	buff->pg_tristate = 2;
@@ -967,7 +967,7 @@ static int __init tegra_pinmux_debuginit(void)
 	debugfs_create_file("tristate", 0666, NULL, buff, &fops_tristate_enable);
 	debugfs_create_file("pinmux", 0666, NULL, buff, &fops_pinmux_enable);
 	debugfs_create_file("pupd", 0666, NULL, buff, &fops_PUPD_enable);
-	//20100725 younghoon.lee@lge.com for pinmux setting while sleep [LGE_END]
+	//20100725  for pinmux setting while sleep [LGE_END]
 
 	return 0;
 }

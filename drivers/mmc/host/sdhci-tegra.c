@@ -40,6 +40,8 @@
 
 #define DRIVER_DESC "NVIDIA Tegra SDHCI compliant driver"
 #define DRIVER_NAME "tegra-sdhci"
+//20110109, prevent a lot of reading and writing SD card firmware
+#define SDCARD_ALWAYS_ON	1
 
 struct tegra_sdhci {
 	struct platform_device	*pdev;
@@ -58,6 +60,11 @@ struct tegra_sdhci {
 	bool			clk_enable;
 	bool			card_always_on;
 	u32			sdhci_ints;
+//20110110, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+	bool			bypass_sd_reinit;
+#endif
+//20110110, prevent a lot of reading and writing SD card firmware [END]
 };
 
 static inline unsigned long res_size(struct resource *res)
@@ -407,6 +414,13 @@ static int tegra_sdhci_remove(struct platform_device *pdev)
 #define is_card_sdio(_card) \
 ((_card) && ((_card)->type == MMC_TYPE_SDIO))
 
+//20110109, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+#define is_card_sd(_card) \
+((_card) && ((_card)->type == MMC_TYPE_SD))
+#endif
+//20110109, prevent a lot of reading and writing SD card firmware [END]
+
 #if defined(CONFIG_PM)
 #define dev_to_host(_dev) platform_get_drvdata(to_platform_device(_dev))
 
@@ -419,16 +433,41 @@ static void tegra_sdhci_restore_interrupts(struct sdhci_host *sdhost)
 	/* enable required interrupts */
 	ierr = sdhci_readl(sdhost, SDHCI_INT_ENABLE);
 	ierr &= ~clear;
+//20110109, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+	if (is_card_sdio(sdhost->mmc->card))
+		ierr |= host->sdhci_ints;
+	else if (is_card_sd(sdhost->mmc->card))
+		ierr = (SDHCI_INT_BUS_POWER | SDHCI_INT_DATA_END_BIT |
+			SDHCI_INT_DATA_CRC | SDHCI_INT_DATA_TIMEOUT | SDHCI_INT_INDEX |
+			SDHCI_INT_END_BIT | SDHCI_INT_CRC | SDHCI_INT_TIMEOUT |
+			SDHCI_INT_DATA_END | SDHCI_INT_RESPONSE);
+#else	//original source
 	ierr |= host->sdhci_ints;
+#endif
+//20110109, prevent a lot of reading and writing SD card firmware [END]
+
 	sdhci_writel(sdhost, ierr, SDHCI_INT_ENABLE);
 	sdhci_writel(sdhost, ierr, SDHCI_SIGNAL_ENABLE);
 
+//20110109, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+	if (is_card_sdio(sdhost->mmc->card))
 	if ((host->sdhci_ints & SDHCI_INT_CARD_INT) &&
 		(sdhost->quirks & SDHCI_QUIRK_ENABLE_INTERRUPT_AT_BLOCK_GAP)) {
 		u8 gap_ctrl = sdhci_readb(sdhost, SDHCI_BLOCK_GAP_CONTROL);
 		gap_ctrl |= 0x8;
 		sdhci_writeb(sdhost, gap_ctrl, SDHCI_BLOCK_GAP_CONTROL);
 	}
+#else	//original source
+	if ((host->sdhci_ints & SDHCI_INT_CARD_INT) &&
+		(sdhost->quirks & SDHCI_QUIRK_ENABLE_INTERRUPT_AT_BLOCK_GAP)) {
+		u8 gap_ctrl = sdhci_readb(sdhost, SDHCI_BLOCK_GAP_CONTROL);
+		gap_ctrl |= 0x8;
+		sdhci_writeb(sdhost, gap_ctrl, SDHCI_BLOCK_GAP_CONTROL);
+	}
+#endif
+//20110109, prevent a lot of reading and writing SD card firmware [END]
 }
 
 static int tegra_sdhci_restore(struct sdhci_host *sdhost)
@@ -465,7 +504,49 @@ static int tegra_sdhci_suspend(struct device *dev)
 	struct tegra_sdhci *host = sdhci_priv(sdhost);
 	struct pm_message event = { PM_EVENT_SUSPEND };
 	int ret = 0;
+//20110109, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+	u32 ierr;
 
+	host->bypass_sd_reinit = host->card_present;
+	if (host->card_always_on) {
+		if (is_card_sdio(sdhost->mmc->card)) {
+			int div = 0;
+			u16 clk;
+			unsigned int clock = 100000;
+
+#if defined(CONFIG_BRCM_LGE_WL_HOSTWAKEUP)
+			if(dhdpm.suspend != NULL) {
+				printk("[sdhci-tegra]%s:%d - call dhdpm.suspend\n",__func__,__LINE__);
+				dhdpm.suspend(NULL);
+			}
+			else
+				printk("[sdhci-tegra]%s:%d - dhdpm.suspend is NULL\n",__func__,__LINE__);
+#endif /* CONFIG_BRCM_LGE_WL_HOSTWAKEUP */
+
+			/* save interrupt status before suspending */
+			host->sdhci_ints = sdhci_readl(sdhost, SDHCI_INT_ENABLE);
+
+			/* reduce host controller clk and card clk to 100 KHz */
+			tegra_sdhci_set_clock(sdhost, clock);
+			sdhci_writew(sdhost, 0, SDHCI_CLOCK_CONTROL);
+
+			if (sdhost->max_clk > clock) {
+				div =  1 << (fls(sdhost->max_clk / clock) - 2);
+				if (div > 128)
+					div = 128;
+			}
+
+			clk = div << SDHCI_DIVIDER_SHIFT;
+			clk |= SDHCI_CLOCK_INT_EN | SDHCI_CLOCK_CARD_EN;
+			sdhci_writew(sdhost, clk, SDHCI_CLOCK_CONTROL);
+		} else if (is_card_sd(sdhost->mmc->card) && host->card_present) {
+			if(host->clk_enable) {
+				clk_disable(host->clk);
+				host->clk_enable = false;
+			}
+		}
+#else	//original source
 	if (host->card_always_on && is_card_sdio(sdhost->mmc->card)) {
 		int div = 0;
 		u16 clk;
@@ -487,6 +568,8 @@ static int tegra_sdhci_suspend(struct device *dev)
 		clk = div << SDHCI_DIVIDER_SHIFT;
 		clk |= SDHCI_CLOCK_INT_EN | SDHCI_CLOCK_CARD_EN;
 		sdhci_writew(sdhost, clk, SDHCI_CLOCK_CONTROL);
+#endif
+//20110109, prevent a lot of reading and writing SD card firmware [END]
 
 		return ret;
 	}
@@ -517,7 +600,15 @@ static int tegra_sdhci_resume(struct device *dev)
 		host->card_present =
 			(gpio_get_value(host->gpio_cd) == host->gpio_polarity_cd);
 
+//20110109, prevent a lot of reading and writing SD card firmware [START]
+#ifdef SDCARD_ALWAYS_ON
+	host->bypass_sd_reinit &= host->card_present;
+	if (host->card_always_on && (is_card_sdio(sdhost->mmc->card) ||
+		(is_card_sd(sdhost->mmc->card) && host->bypass_sd_reinit))) {
+#else	//orignal source
 	if (host->card_always_on && is_card_sdio(sdhost->mmc->card)) {
+#endif
+//20110109, prevent a lot of reading and writing SD card firmware [END]
 		int ret = 0;
 
 		/* soft reset SD host controller and enable interrupts */
