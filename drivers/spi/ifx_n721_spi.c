@@ -90,6 +90,7 @@ void dump_atcmd(char *data, int len)
 }
 
 #else
+#ifdef CONFIG_LPRINTK
 #include <mach/lprintk.h> //20100426, es.lee@lge.com, Change printk to lprintk
 #define SPI_DEBUG_PRINT(format, args...)  lprintk(D_SPI,format , ## args)
 void dump_atcmd(char *data, int len) 
@@ -111,6 +112,10 @@ void dump_atcmd(char *data, int len)
 	}
 	printk("\n");
 }
+#else
+#define SPI_DEBUG_PRINT(format, args...)  {}
+void dump_atcmd(char *data, int len)  {}
+#endif
 #endif
 
 /* Cannot use spinlocks as the NvRm SPI apis uses mutextes and one cannot use
@@ -529,7 +534,7 @@ static int ifx_spi_resume(struct platform_device *dev)
 #endif
 //20100927-1, syblue.lee@lge.com, Hold wake-lock for cp interrupt [END]
         printk("[IFX_SRDY] %s() wakeup pad : 0x%lx\n", __func__, reg);
-#ifndef CONFIG_SPI_DEBUG
+#ifdef CONFIG_LPRINTK
 	 lge_debug[D_SPI].enable = 1;
 #endif
 	 gspi_data->wake_lock_flag = 1;
@@ -822,15 +827,15 @@ ifx_spi_send_and_receive_data(struct ifx_spi_data *spi_data)
 	Reject the packet as of now 
 	}*/
 #ifdef WAKE_LOCK_RESUME
-#ifndef CONFIG_SPI_DEBUG
 	if(spi_data->wake_lock_flag)
 	{
 		spi_data->wake_lock_flag = 0;
+#ifdef CONFIG_LPRINTK
 		lge_debug[D_SPI].enable = 0;
+#endif
 		spi_data->srdy_high_counter = 0;	//RX data has valid data, so that this count is clear.
 		//printk("%s : Clear spi_data->srdy_high_counter = %d\n", __FUNCTION__, spi_data->srdy_high_counter); 
 	}
-#endif
 #endif
 }
 
