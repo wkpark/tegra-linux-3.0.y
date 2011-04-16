@@ -1245,6 +1245,86 @@ static struct platform_device tegra_touch_device = {
 };
 #endif
 
+// 20100927   Synaptics OneTouch support [START]
+#ifdef CONFIG_ONETOUCH_TEGRA_ODM
+static struct platform_device tegra_onetouch_device = {
+	.name = "tegra_onetouch",
+	.id = -1,
+};
+#endif
+// 20100927   Synaptics OneTouch support [END]
+
+#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
+static ssize_t star_virtual_keys_show(struct kobject *kobj,
+               struct kobj_attribute *attr, char *buf)
+{
+       /* Dimensions, 80x80, y starts at 830
+       center: x: menu: 75, home: 185, back: 295, search 405, y: 880 */
+       return sprintf(buf,
+                       __stringify(EV_KEY) ":" __stringify(KEY_MENU)  ":75:880:80:80"
+                       ":" __stringify(EV_KEY) ":" __stringify(KEY_HOME)   ":185:880:80:80"
+                       ":" __stringify(EV_KEY) ":" __stringify(KEY_BACK)   ":295:880:80:80"
+                       ":" __stringify(EV_KEY) ":" __stringify(KEY_SEARCH) ":405:880:80:80"
+                       "\n");
+}
+
+static struct kobj_attribute star_virtual_keys_attr = {
+       .attr = {
+               .name = "virtualkeys.nvodm_touch",
+               .mode = S_IRUGO,
+       },
+       .show = &star_virtual_keys_show,
+};
+
+static struct attribute *star_properties_attrs[] = {
+       &star_virtual_keys_attr.attr,
+       NULL
+};
+
+static struct attribute_group star_properties_attr_group = {
+       .attrs = star_properties_attrs,
+};
+
+static int __init star_init_android_virtualkeys(void)
+{
+	struct kobject *properties_kobj;
+
+	properties_kobj = kobject_create_and_add("board_properties", NULL);
+	if (properties_kobj) {
+		if (sysfs_create_group(properties_kobj,
+					&star_properties_attr_group))
+			pr_err("failed to create board_properties\n");
+	} else {
+		pr_err("failed to create board_properties\n");
+	}
+}
+#endif
+
+#ifdef CONFIG_STAR_GYRO_ACCEL
+static struct platform_device tegra_accelerometer_device =
+{
+	.name = "tegra_accelerometer",
+	.id   = -1,
+};
+
+static struct platform_device tegra_gyro_accel_device =
+{
+	.name = "tegra_gyro_accel",
+	.id   = -1,
+};
+#endif
+
+//20100526 , For Compass Driver [start]
+#ifdef CONFIG_STAR_COMPASS
+static struct platform_device star_compass_device =
+{
+	.name = "tegra_compass",
+	.id	  = -1,
+};
+#endif
+
+// 20100917 jay.sim@lge.com, Temp for Sensor Modulazation --
+
 #ifdef CONFIG_TOUCHSCREEN_PANJIT_I2C
 static struct panjit_i2c_ts_platform_data panjit_data = {
 	.gpio_reset = TEGRA_GPIO_PQ7,
@@ -2619,6 +2699,9 @@ void __init tegra_setup_nvodm(bool standard_i2c, bool standard_spi)
 	ventana_touch_init_atmel();
 #elif defined(CONFIG_TOUCHSCREEN_PANJIT_I2C)
 	ventana_touch_init_panjit();
+#endif
+#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
+	star_init_android_virtualkeys();
 #endif
 	tegra_setup_w1();
 	pm_power_off = tegra_system_power_off;
