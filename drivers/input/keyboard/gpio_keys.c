@@ -539,7 +539,6 @@ static int __devinit gpio_keys_probe(struct platform_device *pdev)
 		cancel_work_sync(&ddata->data[i].work);
 		gpio_free(pdata->buttons[i].gpio);
 	}
-	input_set_capability(input, EV_KEY, KEY_TESTMODE_UNLOCK);
 
 	platform_set_drvdata(pdev, NULL);
  fail1:

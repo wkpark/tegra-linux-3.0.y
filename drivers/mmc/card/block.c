@@ -1076,7 +1076,11 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *req)
  cmd_abort:
 	spin_lock_irq(&md->lock);
 	while (ret)
+	{
+//20110123, , supressed the error message
+		req->cmd_flags |= REQ_QUIET;
 		ret = __blk_end_request(req, -EIO, blk_rq_cur_bytes(req));
+	}
 	spin_unlock_irq(&md->lock);
 
 	return 0;

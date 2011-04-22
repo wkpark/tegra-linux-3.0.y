@@ -54,6 +54,9 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
+
+extern void star_shutdown_prepare();
+
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)
 #endif
@@ -377,6 +380,7 @@ void kernel_power_off(void)
 	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
 	if (pm_power_off_prepare)
 		pm_power_off_prepare();
+	star_shutdown_prepare();
 	disable_nonboot_cpus();
 	syscore_shutdown();
 	printk(KERN_EMERG "Power down.\n");
