@@ -304,7 +304,7 @@ obj-$(CONFIG_VIRTIO_NET) += virtio_net.o
 obj-$(CONFIG_SFC) += sfc/
 
 obj-$(CONFIG_WIMAX) += wimax/
-obj-y += kineto_gan.o
+obj-$(CONFIG_MACH_STAR_TMUS) += kineto_gan.o
 obj-$(CONFIG_CAIF) += caif/
 
 obj-$(CONFIG_OCTEON_MGMT_ETHERNET) += octeon/
