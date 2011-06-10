@@ -24,7 +24,8 @@ DHDCFLAGS = -DLINUX -DBCMDRIVER -DBCMDONGLEHOST -DDHDTHREAD -DBCMWPA2         \
 	-DSDIO_DEVICE_ID_BROADCOM_4329=0x4329 \
 	-DANDROID_SPECIFIC \
 	-DOEM_ANDROID \
-	-DCONFIG_FIRST_SCAN
+	-DCONFIG_FIRST_SCAN \
+	-DCSCAN \
 
 DHDOFILES = dhd_linux.o linux_osl.o bcmutils.o dhd_common.o dhd_custom_gpio.o \
 	wl_iw.o siutils.o sbutils.o aiutils.o hndpmu.o bcmwifi.o dhd_sdio.o   \
