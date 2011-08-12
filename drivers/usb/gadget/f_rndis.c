@@ -912,7 +912,7 @@ int rndis_function_bind_config(struct usb_configuration *c)
 		rndis_pdata->ethaddr[2], rndis_pdata->ethaddr[3],
 		rndis_pdata->ethaddr[4], rndis_pdata->ethaddr[5]);
 
-	ret = gether_setup(c->cdev->gadget, rndis_pdata->ethaddr);
+	ret = gether_setup_name(c->cdev->gadget, rndis_pdata->ethaddr, "rndis");
 	if (ret == 0)
 		ret = rndis_bind_config(c, rndis_pdata->ethaddr);
 	return ret;
