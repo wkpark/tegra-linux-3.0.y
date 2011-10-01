@@ -157,6 +157,7 @@ void __init tegra_init_irq(void)
 	for (i=0; i<PPI_NR; i++) {
 		writel(~0, ictlr_to_virt(i) + ICTLR_CPU_IER_CLR);
 		writel(0, ictlr_to_virt(i) + ICTLR_CPU_IEP_CLASS);
+		writel(~0, ictlr_to_virt(i) + ICTLR_CPU_IEP_FIR_CLR);
 	}
 
 	gic_init(0, 29, IO_ADDRESS(TEGRA_ARM_INT_DIST_BASE),
