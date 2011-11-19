@@ -59,7 +59,7 @@ config STAR_POWERKEY
       Powerkey driver
 
 config STAR_VIBRATOR
-    bool "Star Vibrator Driver"
+    tristate "Star Vibrator Driver"
     default y
     depends on MACH_STAR
     help

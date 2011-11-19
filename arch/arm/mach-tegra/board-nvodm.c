@@ -1548,7 +1548,7 @@ static struct platform_device star_compass_device =
 
 
 //20100526 sk.hwang@lge.com, For Vibrator Driver [start]
-#ifdef CONFIG_STAR_VIBRATOR
+#if defined(CONFIG_STAR_VIBRATOR) || defined(CONFIG_STAR_VIBRATOR_MODULE)
 static struct platform_device star_vib_device =
 {
     .name = "star_vib_name",
@@ -1762,7 +1762,7 @@ static struct platform_device *nvodm_devices[] __initdata = {
 	&tegra_vibrator_device,
 #endif
 
-#ifdef CONFIG_STAR_VIBRATOR
+#if defined(CONFIG_STAR_VIBRATOR) || defined(CONFIG_STAR_VIBRATOR_MODULE)
 	&star_vib_device,
 #endif
 

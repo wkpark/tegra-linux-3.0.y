@@ -30,6 +30,7 @@
  *
  */
 
+#include <linux/module.h>
 #include "nvodm_services.h"
 #include "nvrm_gpio.h"
 #include "nvrm_spi.h"
@@ -976,6 +977,7 @@ fail:
     NvOdmPwmClose(pOdmServices);
     return NULL;
 }
+EXPORT_SYMBOL(NvOdmPwmOpen);
 
 void NvOdmPwmClose(NvOdmServicesPwmHandle hOdmPwm)
 {
@@ -1008,6 +1010,7 @@ NvOdmPwmConfig(NvOdmServicesPwmHandle hOdmPwm,
         RequestedFreqHzOrPeriod,
         pCurrentFreqHzOrPeriod);
 }
+EXPORT_SYMBOL(NvOdmPwmConfig);
 
 void
 NvOdmEnableUsbPhyPowerRail(

@@ -1,3 +1,6 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/device.h>
 #include <linux/delay.h>
@@ -465,18 +468,19 @@ int star_vib_resume(struct platform_device *dev)
 }
 
 
-static int star_vib_remove( struct platform_device *pdev)
+static int __devexit star_vib_remove( struct platform_device *pdev)
 {
 	return 0;
 }
 
 static struct platform_driver star_vib_driver = {
     .probe = star_vib_probe,
-    .remove = star_vib_remove,
+    .remove = __devexit_p(star_vib_remove),
     .suspend = star_vib_suspend,
     .resume = star_vib_resume,    
     .driver = {
         .name = "star_vib_name",
+        .owner = THIS_MODULE,
     },
 };
 

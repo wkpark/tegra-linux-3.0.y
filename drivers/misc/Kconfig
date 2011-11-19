@@ -533,7 +533,7 @@ config APANIC_PLABEL
  	 crashdumps, enter it here.
 
 config TSPDRV
-	bool "tspdrv"
+	tristate "tspdrv"
 	default y
 
 config BCM4329_RFKILL
