@@ -331,6 +331,39 @@ static void tegra_touch_adjust_position(NvU32 finger_num, NvU32 x_value, NvU32 y
 // 20101022  [STAR] apply touch smooth moving improve [END]
 
 
+#ifndef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
+static unsigned int button_map[5] = {KEY_MENU, KEY_HOME, KEY_BACK, KEY_SEARCH, KEY_UNKNOWN};
+#endif
+enum btn_idx {KEYIDX_MENU, KEYIDX_HOME, KEYIDX_BACK, KEYIDX_SEARCH};
+
+#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
+short virtual_down = 0;
+#endif
+
+void report_virtual_key(struct input_dev *input_dev, int position, int state) {
+#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
+       /* Ugly hack. Report a fixed coordinate for 
+        * each button: It doesn't really matter, as
+        * long as it falls within the board-defined
+        * map*/
+       if (state && position <=3) {
+               input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, 40);
+               input_report_abs(input_dev, ABS_MT_WIDTH_MAJOR, 4);
+               input_report_abs(input_dev, ABS_MT_POSITION_X, ((position+1)*120)-60);
+               input_report_abs(input_dev, ABS_MT_POSITION_Y, 910);
+               virtual_down = 1;
+       } else {
+               virtual_down = 0;
+               input_report_abs(input_dev, ABS_MT_TOUCH_MAJOR, 0);
+       }
+       input_report_key(input_dev, BTN_TOUCH, virtual_down);
+       input_mt_sync(input_dev);
+       input_sync(input_dev);
+#else
+       input_report_key(input_dev, button_map[position], state);
+#endif
+}
+
 // 20100402  LGE Touch thread Customization [START]
 #ifdef FEATURE_LGE_TOUCH_CUSTOMIZE
 static int tegra_touch_thread(void *pdata)
@@ -355,10 +388,6 @@ static int tegra_touch_thread(void *pdata)
 	NvU8 valid_fingers = 0;
 	
 	NvU8 lcd_finger_num = 0;
-
-#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
-	unsigned long timeout_jiffies = 0;
-#endif
 
 	/* touch event thread should be frozen before suspend */
     /* 20110730 
@@ -479,36 +508,20 @@ static int tegra_touch_thread(void *pdata)
 						//if(c.additionalInfo.Fingers == 1 && i == 0)
 						if(valid_fingers == 1 && i == 0)
 						{
-#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
-							curr_event_type = TOUCH_EVENT_ABS;
-#else
 							if((y[i] < LGE_TOUCH_RESOLUTION_Y && prev_event_type == TOUCH_EVENT_NULL) || prev_event_type == TOUCH_EVENT_ABS)
 								curr_event_type = TOUCH_EVENT_ABS;
 							else if((y[i] >= LGE_TOUCH_RESOLUTION_Y && prev_event_type == TOUCH_EVENT_NULL) || prev_event_type == TOUCH_EVENT_BUTTON)
 								curr_event_type = TOUCH_EVENT_BUTTON;
-#endif
 
 							if(curr_event_type == TOUCH_EVENT_ABS)
 							{
-#ifndef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
 								if(y[i] < LGE_TOUCH_RESOLUTION_Y)
-#endif
 								{
-#ifdef CONFIG_TOUCHSCREEN_ANDROID_VIRTUALKEYS
-									if(y[i] >= LGE_TOUCH_RESOLUTION_Y) {
-										if (Prev_ToolDown[i] == NV_FALSE) {
-											timeout_jiffies = jiffies + msecs_to_jiffies(300);
-										} else if (time_is_after_eq_jiffies(timeout_jiffies)) {
-											input_report_abs(touch->input_dev, ABS_MT_TOUCH_MAJOR, 0);
-											input_mt_sync(touch->input_dev);
-										}
-									}
-#endif
-									input_report_abs(touch->input_dev, ABS_MT_TOUCH_MAJOR, pressure[i]);
-									input_report_abs(touch->input_dev, ABS_MT_WIDTH_MAJOR, width[i]);
 									input_report_abs(touch->input_dev, ABS_MT_POSITION_X, x[i]);
 									input_report_abs(touch->input_dev, ABS_MT_POSITION_Y, y[i]);
-
+									input_report_abs(touch->input_dev, ABS_MT_TOUCH_MAJOR, pressure[i]);
+									input_report_abs(touch->input_dev, ABS_MT_WIDTH_MAJOR, width[i]);
+									input_report_key(touch->input_dev, BTN_TOUCH, width[i] ? 1 : 0);
 									input_mt_sync(touch->input_dev);
 									touch_fingerprint(DebugMsgPrint, "[TOUCH] Finger1 Press x = %d, y = %d, width = %d\n", x[i], y[i], width[i]);
 
@@ -524,23 +537,21 @@ static int tegra_touch_thread(void *pdata)
 									{
 										if(Prev_ToolDown[i] == NV_FALSE)
 										{
-											input_report_key(touch->input_dev, KEY_MENU, 1);
+											report_virtual_key(touch->input_dev, KEYIDX_MENU, 1);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_MENU, 1);
-											pressed_button_type = KEY_MENU;
-											input_sync(touch->input_dev);
+											pressed_button_type = KEYIDX_MENU;
 										}
 										else
 										{
-											if(pressed_button_type != KEY_MENU && pressed_button_type != KEY_REJECT)
+											if(pressed_button_type != KEYIDX_MENU && pressed_button_type != KEY_REJECT)
 											{
 												input_report_key(touch->input_dev, KEY_REJECT, 1);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 												input_report_key(touch->input_dev, KEY_REJECT, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-												input_report_key(touch->input_dev, pressed_button_type, 0);
+												report_virtual_key(touch->input_dev, pressed_button_type, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 												pressed_button_type = KEY_REJECT;
-												input_sync(touch->input_dev);
 											}
 										}
 									}
@@ -549,23 +560,21 @@ static int tegra_touch_thread(void *pdata)
 									{
 										if(Prev_ToolDown[i] == NV_FALSE)
 										{
-											input_report_key(touch->input_dev, KEY_HOME, 1);
+											report_virtual_key(touch->input_dev, KEYIDX_HOME, 1);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_HOME, 1);
-											pressed_button_type = KEY_HOME;
-											input_sync(touch->input_dev);
+											pressed_button_type = KEYIDX_HOME;
 										}
 										else
 										{
-											if(pressed_button_type != KEY_HOME && pressed_button_type != KEY_REJECT)
+											if(pressed_button_type != KEYIDX_HOME && pressed_button_type != KEY_REJECT)
 											{
-												input_report_key(touch->input_dev, KEY_REJECT, 1);
+												report_virtual_key(touch->input_dev, KEY_REJECT, 1);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 												input_report_key(touch->input_dev, KEY_REJECT, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-												input_report_key(touch->input_dev, pressed_button_type, 0);
+												report_virtual_key(touch->input_dev, pressed_button_type, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 												pressed_button_type = KEY_REJECT;
-												input_sync(touch->input_dev);
 											}
 										}
 									}
@@ -574,23 +583,21 @@ static int tegra_touch_thread(void *pdata)
 									{
 										if(Prev_ToolDown[i] == NV_FALSE)
 										{
-											input_report_key(touch->input_dev, KEY_BACK, 1);
+											report_virtual_key(touch->input_dev, KEYIDX_BACK, 1);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_BACK, 1);
-											pressed_button_type = KEY_BACK;
-											input_sync(touch->input_dev);
+											pressed_button_type = KEYIDX_BACK;
 										}
 										else
 										{
-											if(pressed_button_type != KEY_BACK && pressed_button_type != KEY_REJECT)
+											if(pressed_button_type != KEYIDX_BACK && pressed_button_type != KEY_REJECT)
 											{
 												input_report_key(touch->input_dev, KEY_REJECT, 1);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 												input_report_key(touch->input_dev, KEY_REJECT, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-												input_report_key(touch->input_dev, pressed_button_type, 0);
+												report_virtual_key(touch->input_dev, pressed_button_type, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 												pressed_button_type = KEY_REJECT;
-												input_sync(touch->input_dev);
 											}
 										}
 									}
@@ -599,23 +606,21 @@ static int tegra_touch_thread(void *pdata)
 									{
 										if(Prev_ToolDown[i] == NV_FALSE)
 										{
-											input_report_key(touch->input_dev, KEY_SEARCH, 1);
+											report_virtual_key(touch->input_dev, KEYIDX_SEARCH, 1);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_SEARCH, 1);
-											pressed_button_type = KEY_SEARCH;
-											input_sync(touch->input_dev);
+											pressed_button_type = KEYIDX_SEARCH;
 										}
 										else
 										{
-											if(pressed_button_type != KEY_SEARCH && pressed_button_type != KEY_REJECT)
+											if(pressed_button_type != KEYIDX_SEARCH && pressed_button_type != KEY_REJECT)
 											{
 												input_report_key(touch->input_dev, KEY_REJECT, 1);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 												input_report_key(touch->input_dev, KEY_REJECT, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-												input_report_key(touch->input_dev, pressed_button_type, 0);
+												report_virtual_key(touch->input_dev, pressed_button_type, 0);
 												touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 												pressed_button_type = KEY_REJECT;
-												input_sync(touch->input_dev);
 											}
 										}
 									}
@@ -658,6 +663,7 @@ static int tegra_touch_thread(void *pdata)
 										input_report_abs(touch->input_dev, ABS_MT_POSITION_Y, y[i]);
 										input_report_abs(touch->input_dev, ABS_MT_TOUCH_MAJOR, pressure[i]);
 										input_report_abs(touch->input_dev, ABS_MT_WIDTH_MAJOR, width[i]);
+										input_report_key(touch->input_dev, BTN_TOUCH, width[i] ? 1 : 0);
 										
 										input_mt_sync(touch->input_dev);
 										touch_fingerprint(DebugMsgPrint, "[TOUCH] Finger1 Press x = %d, y = %d, width = %d\n", x[i], y[i], width[i]);
@@ -672,7 +678,7 @@ static int tegra_touch_thread(void *pdata)
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 											input_report_key(touch->input_dev, KEY_REJECT, 0);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-											input_report_key(touch->input_dev, pressed_button_type, 0);
+											report_virtual_key(touch->input_dev, pressed_button_type, 0);
 											touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 											pressed_button_type = KEY_REJECT;
 										}
@@ -743,7 +749,7 @@ static int tegra_touch_thread(void *pdata)
 								touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 1);
 								input_report_key(touch->input_dev, KEY_REJECT, 0);
 								touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", KEY_REJECT, 0);
-								input_report_key(touch->input_dev, pressed_button_type, 0);
+								report_virtual_key(touch->input_dev, pressed_button_type, 0);
 								touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 								pressed_button_type = KEY_REJECT;
 							}
@@ -754,6 +760,7 @@ static int tegra_touch_thread(void *pdata)
 								input_report_abs(touch->input_dev, ABS_MT_POSITION_Y, y[i]);
 								input_report_abs(touch->input_dev, ABS_MT_TOUCH_MAJOR, pressure[i]);
 								input_report_abs(touch->input_dev, ABS_MT_WIDTH_MAJOR, width[i]);
+								input_report_key(touch->input_dev, BTN_TOUCH, width[i] ? 1 : 0);
 
 								input_mt_sync(touch->input_dev);
 								touch_fingerprint(DebugMsgPrint, "[TOUCH] Finger%d Press x = %d, y = %d, press = %d\n", i+1, x[i], y[i], width[i]);
@@ -767,10 +774,9 @@ static int tegra_touch_thread(void *pdata)
 					{
 						if(pressed_button_type != KEY_REJECT && i == 0)
 						{
-							input_report_key(touch->input_dev, pressed_button_type, 0);
+							report_virtual_key(touch->input_dev, pressed_button_type, 0);
 							touch_fingerprint(DebugMsgPrint, "[TOUCH] Key Event KEY = %d, PRESS = %d\n", pressed_button_type, 0);
 							pressed_button_type = KEY_REJECT;
-							input_sync(touch->input_dev);
 						}
 						else
 						{
@@ -783,12 +789,9 @@ static int tegra_touch_thread(void *pdata)
 					}
 				}
 
-				if(curr_event_type == TOUCH_EVENT_ABS)
-				{
-					if(lcd_finger_num == 0)
-						input_mt_sync(touch->input_dev);
-					input_sync(touch->input_dev);
-				}
+				if(!virtual_down)
+					input_mt_sync(touch->input_dev);
+				input_sync(touch->input_dev);
 				
 				//if(c.additionalInfo.Fingers == 0)
 				if(valid_fingers == 0)
