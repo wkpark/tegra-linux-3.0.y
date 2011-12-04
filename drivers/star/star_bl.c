@@ -265,24 +265,23 @@ static struct aat2870_ctl_tbl_t aat2870bl_normal_tbl[] = {
 
 /* Set to ALC mode HW-high gain mode*/
 static struct aat2870_ctl_tbl_t aat2870bl_alc_tbl[] = {
-/*2010-12-18. sk.jang@lge.com. Change the ALC Settting value [START] */
-    /* ALC table 0~15 */
-    {0x12,0x19},  /* ALS current setting 5.63mA */
-    {0x13,0x1D},  /* ALS current setting 6.53mA */
-    {0x14,0x20},  /* ALS current setting 7.20mA */
-    {0x15,0x22},  /* ALS current setting 7.65mA */
-    {0x16,0x23},  /* ALS current setting 7.88mA */
-    {0x17,0x25},  /* ALS current setting 8.33mA */
-    {0x18,0x28},  /* ALS current setting 9.0mA */
-    {0x19,0x2A},  /* ALS current setting 9.45mA */
-    {0x1A,0x2B},  /* ALS current setting 9.68mA */
-    {0x1B,0x2D},  /* ALS current setting 10.13mA */
-    {0x1C,0x2F},  /* ALS current setting 10.58mA */
-    {0x1D,0x33},  /* ALS current setting 11.48mA */
-    {0x1E,0x36},  /* ALS current setting 12.15mA */
-    {0x1F,0x39},  /* ALS current setting 12.83mA */
-    {0x20,0x3C},  /* ALS current setting 13.50mA */
-    {0x21,0x3F},  /* ALS current setting 14.18mA */
+    /* ALC table 0~15 20101218 tunning ver. */
+    {0x12,0x19},  /* ALS current setting 5.6mA */
+    {0x13,0x20},  /* ALS current setting 7.2mA */
+    {0x14,0x21},  /* ALS current setting 7.4mA */
+    {0x15,0x23},  /* ALS current setting 7.9mA */
+    {0x16,0x24},  /* ALS current setting 8.1mA */
+    {0x17,0x25},  /* ALS current setting 8.3mA */
+    {0x18,0x27},  /* ALS current setting 9.0mA */
+    {0x19,0x28},  /* ALS current setting 9.5mA */
+    {0x1A,0x29},  /* ALS current setting 10.1mA */
+    {0x1B,0x2A},  /* ALS current setting 10.8mA */
+    {0x1C,0x2F},  /* ALS current setting 11.5mA */
+    {0x1D,0x30},  /* ALS current setting 12.2mA */
+    {0x1E,0x32},  /* ALS current setting 12.8mA */
+    {0x1F,0x35},  /* ALS current setting 13.5mA */
+    {0x20,0x36},  /* ALS current setting 14.2mA */
+    {0x21,0x37},  /* ALS current setting 14.6mA */
 
     { 0x0E, 0x73 },  /* SNSR_LIN_LOG=linear, ALSOUT_LIN_LOG=log, RSET=16k~64k,
                                    * GAIN=low, GM=man gain, ALS_EN=on */
