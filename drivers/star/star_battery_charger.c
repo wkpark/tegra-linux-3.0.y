@@ -2474,9 +2474,11 @@ static void tegra_battery_shutdown(struct platform_device *pdev)
 
 	if (charging_ic->hGpio) NvOdmGpioClose(charging_ic->hGpio);
 
+#if 0
 	for (i = 0; i < ARRAY_SIZE(tegra_supplies); i++) {
 		power_supply_unregister(&tegra_supplies[i]);
 	}
+#endif
 
 	if (star_batt_dev)
 	{
