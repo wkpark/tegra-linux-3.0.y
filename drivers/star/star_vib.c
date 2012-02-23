@@ -87,7 +87,7 @@ static int star_vib_set_power_rail(NvU32 vdd_id, NvBool is_enable)
 		if (is_enable) {
 			pr_debug("%s: vibrator PMU enable\n", __func__);
 			pr_info("%s: Max millivolt=%d\n", __func__, vddrailcap.requestMilliVolts);
-			NvOdmServicesPmuSetVoltage(h_pmu, vdd_id, vddrailcap.requestMilliVolts, &settletime);
+			NvOdmServicesPmuSetVoltage(h_pmu, vdd_id, 2100 /* vddrailcap.requestMilliVolts */, &settletime);
 		} else {
 			pr_debug("[skhwang] vibrator PMU do not enable\n");
 			NvOdmServicesPmuSetVoltage(h_pmu, vdd_id, NVODM_VOLTAGE_OFF, &settletime);
