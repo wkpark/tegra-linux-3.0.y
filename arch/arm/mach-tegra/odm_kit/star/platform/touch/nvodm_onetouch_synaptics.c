@@ -294,7 +294,7 @@ static NvBool Synaptics_OneTouch_GetSamples (Synaptics_OneTouch_Device* hTouch, 
 		return NV_FALSE;
 	}
 
-	printk("[ONETOUCH] pOneTouchDataRegs %d, %d, %d, %d\n", pOneTouchDataRegs[0], pOneTouchDataRegs[1], pOneTouchDataRegs[2], pOneTouchDataRegs[3]);
+	NVODMTOUCH_PRINTF(("[ONETOUCH] pOneTouchDataRegs %d, %d, %d, %d\n", pOneTouchDataRegs[0], pOneTouchDataRegs[1], pOneTouchDataRegs[2], pOneTouchDataRegs[3]));
 	if(pOneTouchDataRegs[1] &0x8)
 		button->back = NV_TRUE;
 	else 

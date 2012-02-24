@@ -555,7 +555,7 @@ static NvBool Synaptics_GetSamples (Synaptics_TouchDevice* hTouch, NvOdmTouchCoo
 						}
 					}
 
-					printk("[TOUCH] synaptics_ts_melting_count : %d\n", synaptics_ts_melting_count);
+					NVODMTOUCH_PRINTF(("[TOUCH] synaptics_ts_melting_count : %d\n", synaptics_ts_melting_count));
 				}
 			}
 
@@ -1510,21 +1510,21 @@ NvBool Synaptics_PowerControl (NvOdmTouchDeviceHandle hDevice, NvOdmTouchPowerMo
 	if(mode == NvOdmTouch_PowerMode_0)
 	{
 		Synaptics_ReadRegisterSafe (hTouch, SYNAPTICS_DELTA_X_THRES_REG, (NvU8*)(&configValueX), sizeof(configValueX));
-		printk("[TOUCH] Synaptics Delta X threshold %x\n", configValueX);
+		NVODMTOUCH_PRINTF(("[TOUCH] Synaptics Delta X threshold %x\n", configValueX));
 		if(configValueX != SYNAPTICS_DELTA_THRESHOLD)
 			return NV_FALSE;
 
 		Synaptics_ReadRegisterSafe (hTouch, SYNAPTICS_DELTA_Y_THRES_REG, (NvU8*)(&configValueY), sizeof(configValueY));
-		printk("[TOUCH] Synaptics Delta Y threshold %x\n", configValueY);
+		NVODMTOUCH_PRINTF(("[TOUCH] Synaptics Delta Y threshold %x\n", configValueY));
 		if(configValueY != SYNAPTICS_DELTA_THRESHOLD)
 			return NV_FALSE;
 	}
 // 20100920 joseph.jung@lge.com ESD Issue [END]
 
 	if(Synaptics_ReadRegisterSafe (hTouch, SYNAPTICS_DEVICE_CONTROL_REG, (NvU8*)(&DeviceControl), sizeof(DeviceControl)))
-		printk("Synaptics Device Control Read Success\n");
+		NVODMTOUCH_PRINTF(("Synaptics Device Control Read Success\n"));
 	if(Synaptics_WriteRegister(hTouch, SYNAPTICS_DEVICE_CONTROL_REG, ((DeviceControl & 0xFC) | SleepMode)))
-		printk("Synaptics Device Control Write Success\n");
+		NVODMTOUCH_PRINTF(("Synaptics Device Control Write Success\n"));
 
 // 20101223 joseph.jung@lge.com improve ghost finger avoidance algorithm [START]
 	if(!SleepMode && hTouch->FirmwareRevId >= SYNAPTICS_MELT_SUPPORT_VER)
@@ -1534,7 +1534,7 @@ NvBool Synaptics_PowerControl (NvOdmTouchDeviceHandle hDevice, NvOdmTouchPowerMo
 			NvU8 melt_mode = SYNAPTICS_NO_MELT_MODE;
 			Synaptics_ReadRegisterSafe (hTouch, SYNAPTICS_MELT_CONTROL_REG, (NvU8*)(&melt_mode), sizeof(melt_mode));
 			hTouch->MeltType = melt_mode;
-			printk("[TOUCH] melt type : %d\n", hTouch->MeltType);
+			NVODMTOUCH_PRINTF(("[TOUCH] melt type : %d\n", hTouch->MeltType));
 			synaptics_ts_melting_count = 0;
 			synaptics_ts_melting_enable = NV_TRUE;
 		}
