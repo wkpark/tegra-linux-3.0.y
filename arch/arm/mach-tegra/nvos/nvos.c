@@ -53,6 +53,7 @@
 #include <linux/vmalloc.h>
 #include <linux/pagemap.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
 #include <asm/atomic.h>
 #include <asm/io.h>
 #include <asm/page.h>

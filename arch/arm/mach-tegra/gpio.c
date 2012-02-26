@@ -21,6 +21,7 @@
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 
 #include <linux/io.h>
 #include <linux/gpio.h>
@@ -275,7 +276,7 @@ static void tegra_gpio_irq_handler(unsigned int irq, struct irq_desc *desc)
 			__raw_readl(GPIO_INT_ENB(gpio));
 		u32 lvl = __raw_readl(GPIO_INT_LVL(gpio));
 
-		for_each_bit(pin, &sta, 8) {
+		for_each_set_bit(pin, &sta, 8) {
 			__raw_writel(1 << pin, GPIO_INT_CLR(gpio));
 
 			/* if gpio is edge triggered, clear condition

@@ -37,6 +37,7 @@
 // Include headers that provide NULL, size_t, offsetof, and [u]intptr_t.  In
 // the event that the toolchain doesn't provide these, provide them ourselves.
 #include <stddef.h>
+#include <linux/slab.h>
 #if defined(_WIN32_WCE)
 typedef int          intptr_t;
 typedef unsigned int uintptr_t;

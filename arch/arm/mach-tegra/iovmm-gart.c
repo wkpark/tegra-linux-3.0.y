@@ -26,6 +26,7 @@
 #include <linux/spinlock.h>
 #include <linux/vmalloc.h>
 #include <linux/mm.h>
+#include <linux/slab.h>
 #include <asm/io.h>
 #include <asm/cacheflush.h>
 

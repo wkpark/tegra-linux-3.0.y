@@ -26,6 +26,7 @@
 #include <linux/string.h>
 #include <linux/io.h>
 #include <linux/mm.h>
+#include <linux/slab.h>
 #include <mach/fuse.h>
 #include <mach/iomap.h>
 #include <ap20/arclk_rst.h>

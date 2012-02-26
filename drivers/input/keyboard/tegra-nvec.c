@@ -24,6 +24,7 @@
 #define NV_DEBUG 0
 
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/input.h>
 #include <linux/device.h>
 #include <linux/kthread.h>

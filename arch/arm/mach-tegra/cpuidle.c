@@ -30,6 +30,7 @@
 #include <linux/io.h>
 #include <linux/tick.h>
 #include <linux/interrupt.h>
+#include <linux/slab.h>
 #include <mach/iomap.h>
 #include <linux/suspend.h>
 

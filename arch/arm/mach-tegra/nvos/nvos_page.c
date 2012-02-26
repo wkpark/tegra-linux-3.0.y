@@ -22,6 +22,7 @@
 
 #include <linux/vmalloc.h>
 #include <linux/highmem.h>
+#include <linux/slab.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #include <asm/pgtable.h>

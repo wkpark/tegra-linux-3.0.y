@@ -20,6 +20,7 @@
 #include <linux/errno.h>
 #include <linux/spinlock.h>
 #include <linux/io.h>
+#include <linux/slab.h>
 
 #include <mach/iomap.h>
 #include <mach/pinmux.h>

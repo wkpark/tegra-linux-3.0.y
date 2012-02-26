@@ -23,6 +23,7 @@
 #include <linux/completion.h>
 #include <linux/sched.h>
 #include <linux/cpu.h>
+#include <linux/slab.h>
 
 #include <asm/cacheflush.h>
 #include <mach/hardware.h>
@@ -307,7 +308,7 @@ void platform_cpu_die(unsigned int cpu)
 	preempt_enable_no_resched();
 }
 
-int mach_cpu_disable(unsigned int cpu)
+int platform_cpu_disable(unsigned int cpu)
 {
 	/*
 	 * we don't allow CPU 0 to be shutdown (it is still too special
