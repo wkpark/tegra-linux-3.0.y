@@ -44,6 +44,7 @@
 
 #include <linux/interrupt.h>
 #include <linux/proc_fs.h>
+#include <linux/sched.h>
 
 // RFC3394 key wrap block size is 64 bites which is equal to 8 bytes
 #define AES_RFC_3394_KEY_WRAP_BLOCK_SIZE_BYTES 8

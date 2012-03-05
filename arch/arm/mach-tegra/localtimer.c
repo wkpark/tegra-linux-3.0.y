@@ -25,7 +25,7 @@ extern unsigned long twd_prescaler;
 /*
  * Setup the local clock events for a CPU.
  */
-void __cpuinit local_timer_setup(struct clock_event_device *evt)
+int __cpuinit local_timer_setup(struct clock_event_device *evt)
 {
 #ifdef CONFIG_USE_ARM_TWD_PRESCALER
 	if (!twd_prescaler) {
@@ -35,6 +35,8 @@ void __cpuinit local_timer_setup(struct clock_event_device *evt)
 #endif
 	evt->irq = IRQ_LOCALTIMER;
 	twd_timer_setup(evt);
+
+	return 0;
 }
 
 #ifdef CONFIG_USE_ARM_TWD_PRESCALER

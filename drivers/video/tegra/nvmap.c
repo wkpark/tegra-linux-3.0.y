@@ -37,7 +37,6 @@
 #include <linux/backing-dev.h>
 #include <linux/device.h>
 #include <linux/highmem.h>
-#include <linux/smp_lock.h>
 #include <linux/pagemap.h>
 #include <linux/sched.h>
 #include <linux/io.h>

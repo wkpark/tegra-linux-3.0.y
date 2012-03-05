@@ -31,11 +31,13 @@
 #include <linux/uaccess.h>
 #include <linux/rwsem.h>
 #include <mach/irqs.h>
+#include <linux/sched.h>
 #include "nvos.h"
 #include "nvos_ioctl.h"
 #include "nvassert.h"
 #include <linux/err.h>
 
+static DEFINE_MUTEX(nvos_mutex);
 int nvos_open(struct inode *inode, struct file *file);
 int nvos_close(struct inode *inode, struct file *file);
 static long nvos_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
@@ -456,9 +458,9 @@ static long nvos_ioctl(struct file *filp,
         if (filp->f_op != &knvos_fops)
             return -EACCES;
 
-        lock_kernel();
+        mutex_lock(&nvos_mutex);
         e = interrupt_register(Instance, arg);
-        unlock_kernel();
+        mutex_unlock(&nvos_mutex);
         return e;
 
     case NV_IOCTL_INTERRUPT_UNREGISTER:
@@ -468,9 +470,9 @@ static long nvos_ioctl(struct file *filp,
         if (filp->f_op != &knvos_fops)
             return -EACCES;
 
-        lock_kernel();
+        mutex_lock(&nvos_mutex);
         e = interrupt_op(Instance, cmd, arg);
-        unlock_kernel();
+        mutex_unlock(&nvos_mutex);
         return (e) ? -EINVAL : 0;
 
     case NV_IOCTL_MEMORY_RANGE:

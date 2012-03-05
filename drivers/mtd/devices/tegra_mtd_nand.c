@@ -755,7 +755,7 @@ static int __devinit tegra_nand_probe(struct platform_device *pdev)
 		err = add_mtd_partitions(mtd, plat->parts, plat->nr_parts);
 	} else
 #endif
-		err = add_mtd_device(mtd);
+		err = mtd_device_register(mtd, NULL, 0);
 
 	if (err)
 		goto fail;

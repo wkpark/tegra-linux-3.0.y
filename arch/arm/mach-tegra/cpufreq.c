@@ -32,7 +32,6 @@
 #include <linux/freezer.h>
 #include <linux/kthread.h>
 #include <linux/workqueue.h>
-#include <linux/smp_lock.h>
 #include <linux/suspend.h>
 #include <linux/reboot.h>
 #include <linux/delay.h>

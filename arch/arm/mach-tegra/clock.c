@@ -24,6 +24,7 @@
 #include <linux/debugfs.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
+#include <linux/clkdev.h>
 #include <asm/clkdev.h>
 
 #include "clock.h"

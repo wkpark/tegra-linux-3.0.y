@@ -20,7 +20,7 @@
 #ifndef __MACH_TEGRA_CLOCK_H
 #define __MACH_TEGRA_CLOCK_H
 
-#include <asm/clkdev.h>
+#include <linux/clkdev.h>
 
 #define DIV_BUS			(1 << 0)
 #define DIV_U71			(1 << 1)

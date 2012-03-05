@@ -27,12 +27,12 @@
 #include <asm/cacheflush.h>
 #include <mach/hardware.h>
 #include <asm/mach-types.h>
-#include <asm/localtimer.h>
 #include <asm/tlbflush.h>
 #include <asm/smp_scu.h>
 #include <asm/cpu.h>
 #include <asm/mmu_context.h>
 #include <asm/pgalloc.h>
+#include <asm/hardware/gic.h>
 
 #include <mach/iomap.h>
 
@@ -80,7 +80,7 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 #endif
 
 	trace_hardirqs_off();
-	gic_cpu_init(0, IO_ADDRESS(TEGRA_ARM_PERIF_BASE) + 0x100);
+	gic_secondary_init(0);
 	/*
 	 * Synchronise with the boot thread.
 	 */
@@ -218,19 +218,10 @@ static int create_suspend_pgtable(void)
 }
 #endif
 
-void __init smp_prepare_cpus(unsigned int max_cpus)
+void __init platform_smp_prepare_cpus(unsigned int max_cpus)
 {
 	unsigned int ncores = scu_get_core_count(scu_base);
-	unsigned int cpu = smp_processor_id();
 	int i;
-
-	smp_store_cpu_info(cpu);
-
-	/*
-	 * are we trying to boot more cores than exist?
-	 */
-	if (max_cpus > ncores)
-		max_cpus = ncores;
 
 #if defined(CONFIG_PM) || defined(CONFIG_HOTPLUG_CPU)
 	tegra_context_area = kzalloc(CONTEXT_SIZE_BYTES * ncores, GFP_KERNEL);
