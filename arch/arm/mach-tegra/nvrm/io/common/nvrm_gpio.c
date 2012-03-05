@@ -231,9 +231,11 @@ NvError NvRmGpioConfigPins(NvRmGpioHandle gpio, NvRmGpioPinHandle *hpins,
 			tegra_gpio_disable(gpio);
 		} else {
 			struct irq_chip *chip;
+			struct irq_desc *desc;
 			int irq = gpio_to_irq(gpio);
 
-			chip = get_irq_chip(irq);
+			chip = irq_get_chip(irq);
+			desc = irq_to_desc(irq);
 			tegra_gpio_enable(gpio);
 
 			switch (mode) {
@@ -246,24 +248,24 @@ NvError NvRmGpioConfigPins(NvRmGpioHandle gpio, NvRmGpioPinHandle *hpins,
 				break;
 			case NvRmGpioPinMode_InputInterruptRisingEdge:
 				gpio_direction_input(gpio);
-				chip->set_type(irq, IRQ_TYPE_EDGE_RISING);
+				chip->irq_set_type(&desc->irq_data, IRQ_TYPE_EDGE_RISING);
 				break;
 			case NvRmGpioPinMode_InputInterruptFallingEdge:
 				gpio_direction_input(gpio);
-				chip->set_type(irq, IRQ_TYPE_EDGE_FALLING);
+				chip->irq_set_type(&desc->irq_data, IRQ_TYPE_EDGE_FALLING);
 				break;
 				break;
 			case NvRmGpioPinMode_InputInterruptAny:
 				gpio_direction_input(gpio);
-				chip->set_type(irq, IRQ_TYPE_EDGE_BOTH);
+				chip->irq_set_type(&desc->irq_data, IRQ_TYPE_EDGE_BOTH);
 				break;
 			case NvRmGpioPinMode_InputInterruptHigh:
 				gpio_direction_input(gpio);
-				chip->set_type(irq, IRQ_TYPE_LEVEL_HIGH);
+				chip->irq_set_type(&desc->irq_data, IRQ_TYPE_LEVEL_HIGH);
 				break;
 			case NvRmGpioPinMode_InputInterruptLow:
 				gpio_direction_input(gpio);
-				chip->set_type(irq, IRQ_TYPE_LEVEL_LOW);
+				chip->irq_set_type(&desc->irq_data, IRQ_TYPE_LEVEL_LOW);
 				break;
 			default:
 				break;

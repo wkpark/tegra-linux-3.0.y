@@ -50,30 +50,30 @@ enum {
 	HOST1X_SYNC_SYNCPT_THRESH_INT_DISABLE = 0x60
 };
 
-static void (*gic_mask_irq)(unsigned int irq) = NULL;
-static void (*gic_unmask_irq)(unsigned int irq) = NULL;
+static void (*gic_mask_irq)(struct irq_data *d) = NULL;
+static void (*gic_unmask_irq)(struct irq_data *d) = NULL;
 
 #define irq_to_ictlr(irq) (((irq)-32) >> 5)
 static void __iomem *tegra_ictlr_base = IO_ADDRESS(TEGRA_PRIMARY_ICTLR_BASE);
 #define ictlr_to_virt(ictlr) (tegra_ictlr_base + (ictlr)*0x100)
 
-static void tegra_mask(unsigned int irq)
+static void tegra_mask(struct irq_data *d)
 {
-	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(irq));
-	gic_mask_irq(irq);
-	writel(1<<(irq&31), addr+ICTLR_CPU_IER_CLR);
+	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(d->irq));
+	gic_mask_irq(d);
+	writel(1<<(d->irq&31), addr+ICTLR_CPU_IER_CLR);
 }
 
-static void tegra_unmask(unsigned int irq)
+static void tegra_unmask(struct irq_data *d)
 {
-	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(irq));
-	gic_unmask_irq(irq);
-	writel(1<<(irq&31), addr+ICTLR_CPU_IER_SET);
+	void __iomem *addr = ictlr_to_virt(irq_to_ictlr(d->irq));
+	gic_unmask_irq(d);
+	writel(1<<(d->irq&31), addr+ICTLR_CPU_IER_SET);
 }
 
 #ifdef CONFIG_PM
 
-static int tegra_set_wake(unsigned int irq, unsigned int on)
+static int tegra_set_wake(struct irq_data *d, unsigned int on)
 {
 	return 0;
 }
@@ -81,30 +81,30 @@ static int tegra_set_wake(unsigned int irq, unsigned int on)
 
 static struct irq_chip tegra_irq = {
 	.name		= "PPI",
-	.mask		= tegra_mask,
-	.unmask		= tegra_unmask,
+	.irq_mask		= tegra_mask,
+	.irq_unmask		= tegra_unmask,
 #ifdef CONFIG_PM
-	.set_wake	= tegra_set_wake,
+	.irq_set_wake	= tegra_set_wake,
 #endif
 };
 
-static void syncpt_thresh_mask(unsigned int irq)
+static void syncpt_thresh_mask(struct irq_data *data)
 {
-	(void)irq;
+	(void)data;
 }
 
-static void syncpt_thresh_unmask(unsigned int irq)
+static void syncpt_thresh_unmask(struct irq_data *data)
 {
-	(void)irq;
+	(void)data;
 }
 
 static void syncpt_thresh_cascade(unsigned int irq, struct irq_desc *desc)
 {
-	void __iomem *sync_regs = get_irq_desc_data(desc);
+	void __iomem *sync_regs = irq_desc_get_handler_data(desc);
 	u32 reg;
 	int id;
 
-	desc->chip->ack(irq);
+	desc->irq_data.chip->irq_ack(&desc->irq_data);
 
 	reg = readl(sync_regs + HOST1X_SYNC_SYNCPT_THRESH_CPU0_INT_STATUS);
 
@@ -113,13 +113,13 @@ static void syncpt_thresh_cascade(unsigned int irq, struct irq_desc *desc)
 		generic_handle_irq(id + INT_SYNCPT_THRESH_BASE);
 	}
 
-	desc->chip->unmask(irq);
+	desc->irq_data.chip->irq_unmask(&desc->irq_data);
 }
 
 static struct irq_chip syncpt_thresh_irq = {
 	.name		= "syncpt",
-	.mask		= syncpt_thresh_mask,
-	.unmask		= syncpt_thresh_unmask
+	.irq_mask		= syncpt_thresh_mask,
+	.irq_unmask		= syncpt_thresh_unmask
 };
 
 void __init syncpt_init_irq(void)
@@ -137,14 +137,13 @@ void __init syncpt_init_irq(void)
 		sync_regs + HOST1X_SYNC_SYNCPT_THRESH_CPU0_INT_STATUS);
 
 	for (i = INT_SYNCPT_THRESH_BASE; i < INT_GPIO_BASE; i++) {
-		set_irq_chip(i, &syncpt_thresh_irq);
-		set_irq_chip_data(i, sync_regs);
-		set_irq_handler(i, handle_simple_irq);
+		irq_set_chip_and_handler(i, &syncpt_thresh_irq, handle_simple_irq);
+		irq_set_chip_data(i, sync_regs);
 		set_irq_flags(i, IRQF_VALID);
 	}
-	if (set_irq_data(INT_HOST1X_MPCORE_SYNCPT, sync_regs))
+	if (irq_set_handler_data(INT_HOST1X_MPCORE_SYNCPT, sync_regs))
 		BUG();
-	set_irq_chained_handler(INT_HOST1X_MPCORE_SYNCPT,
+	irq_set_chained_handler(INT_HOST1X_MPCORE_SYNCPT,
 				syncpt_thresh_cascade);
 }
 
@@ -158,20 +157,19 @@ void __init tegra_init_irq(void)
 		writel(0, ictlr_to_virt(i) + ICTLR_CPU_IEP_CLASS);
 	}
 
-	gic_dist_init(0, IO_ADDRESS(TEGRA_ARM_INT_DIST_BASE), 29);
-	gic_cpu_init(0, IO_ADDRESS(TEGRA_ARM_PERIF_BASE + 0x100));
+	gic_init(0, 29, IO_ADDRESS(TEGRA_ARM_INT_DIST_BASE),
+		IO_ADDRESS(TEGRA_ARM_PERIF_BASE + 0x100));
 
-	gic = get_irq_chip(29);
-	gic_unmask_irq = gic->unmask;
-	gic_mask_irq = gic->mask;
-	tegra_irq.ack = gic->ack;
+	gic = irq_get_chip(29);
+	gic_unmask_irq = gic->irq_unmask;
+	gic_mask_irq = gic->irq_mask;
+	tegra_irq.irq_ack = gic->irq_ack;
 #ifdef CONFIG_SMP
-	tegra_irq.set_affinity = gic->set_affinity;
+	tegra_irq.irq_set_affinity = gic->irq_set_affinity;
 #endif
 
 	for (i=INT_PRI_BASE; i<INT_SYNCPT_THRESH_BASE; i++) {
-		set_irq_chip(i, &tegra_irq);
-		set_irq_handler(i, handle_level_irq);
+		irq_set_chip_and_handler(i, &tegra_irq, handle_level_irq);
 		set_irq_flags(i, IRQF_VALID);
 	}
 
@@ -190,7 +188,7 @@ void tegra_irq_suspend(void)
 	for (i=INT_PRI_BASE; i<INT_GPIO_BASE; i++) {
 		struct irq_desc *desc = irq_to_desc(i);
 		if (!desc) continue;
-		if (desc->status & IRQ_WAKEUP) {
+		if (irqd_is_wakeup_set(&desc->irq_data)) {
 			pr_debug("irq %d is wakeup\n", i);
 			continue;
 		}
@@ -224,7 +222,7 @@ void tegra_irq_resume(void)
 
 	for (i=INT_PRI_BASE; i<INT_GPIO_BASE; i++) {
 		struct irq_desc *desc = irq_to_desc(i);
-		if (!desc || (desc->status & IRQ_WAKEUP)) continue;
+		if (!desc || irqd_is_wakeup_set(&desc->irq_data)) continue;
 		enable_irq(i);
 	}
 }

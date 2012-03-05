@@ -693,6 +693,9 @@ int irq_setup_alt_chip(struct irq_data *d, unsigned int type);
 void irq_remove_generic_chip(struct irq_chip_generic *gc, u32 msk,
 			     unsigned int clr, unsigned int set);
 
+void mask_wakeup_suspended_irqs(void);
+void unmask_wakeup_suspended_irqs(void);
+
 static inline struct irq_chip_type *irq_data_get_chip_type(struct irq_data *d)
 {
 	return container_of(d->chip, struct irq_chip_type, chip);

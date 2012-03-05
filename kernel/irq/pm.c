@@ -94,3 +94,27 @@ int check_wakeup_irqs(void)
 
 	return 0;
 }
+
+void mask_wakeup_suspended_irqs(void)
+{
+	struct irq_desc *desc;
+	int irq;
+
+	for_each_irq_desc(irq, desc) {
+		if (irqd_is_wakeup_set(&desc->irq_data) &&
+			desc->istate & IRQS_SUSPENDED)
+			mask_irq(desc);
+	}
+}
+
+void unmask_wakeup_suspended_irqs(void)
+{
+	struct irq_desc *desc;
+	int irq;
+
+	for_each_irq_desc(irq, desc) {
+		if (irqd_is_wakeup_set(&desc->irq_data) &&
+			desc->istate & IRQS_SUSPENDED)
+			unmask_irq(desc);
+	}
+}
