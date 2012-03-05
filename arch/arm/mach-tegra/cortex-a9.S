@@ -319,7 +319,7 @@ ENTRY(__cortex_a9_save)
 	ldr	r1, [r4, #L2X0_AUX_CTRL]
 	ldr	r2, [r4, #L2X0_TAG_LATENCY_CTRL]
 	ldr	r3, [r4, #L2X0_DATA_LATENCY_CTRL]
-	ldr	r4, [r4, #L2X0_PREFETCH_OFFSET]
+	ldr	r4, [r4, #L2X0_PREFETCH_CTRL]
 	stmia	r9, {r0-r4}
 #endif
 
@@ -525,10 +525,10 @@ ENTRY(__cortex_a9_l2x0_restart)
 	ldmia	r10, {r3-r7}
 	str	r5, [r9, #L2X0_TAG_LATENCY_CTRL]
 	str	r6, [r9, #L2X0_DATA_LATENCY_CTRL]
-	str	r7, [r9, #L2X0_PREFETCH_OFFSET]
+	str	r7, [r9, #L2X0_PREFETCH_CTRL]
 	str	r4, [r9, #L2X0_AUX_CTRL]
 	mov     r4, #0x2                @ L2X0_DYNAMIC_CLK_GATING_EN
-	str     r4, [r9, #L2X0_PWR_CTRL]
+	str     r4, [r9, #L2X0_POWER_CTRL]
 	cmp	r0, #0
 
 	beq	__reenable_l2x0
