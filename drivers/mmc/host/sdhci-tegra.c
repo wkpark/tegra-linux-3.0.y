@@ -330,7 +330,8 @@ skip_gpio_wp:
 		plat->register_status_notify(tegra_sdhci_status_notify_cb,
 			sdhost);
 
-	sdhost->data_width = plat->bus_width;
+	if (plat->bus_width == 8)
+		sdhost->mmc->caps |= MMC_CAP_8_BIT_DATA;
 	sdhost->dma_mask = DMA_BIT_MASK(32);
 	ret = sdhci_add_host(sdhost);
 	if (ret)
