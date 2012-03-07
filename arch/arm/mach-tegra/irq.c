@@ -24,6 +24,7 @@
 #include <linux/io.h>
 
 #include <asm/hardware/gic.h>
+#include <asm/mach/irq.h>
 
 #include <mach/iomap.h>
 #include <mach/suspend.h>
@@ -101,19 +102,18 @@ static void syncpt_thresh_unmask(struct irq_data *data)
 static void syncpt_thresh_cascade(unsigned int irq, struct irq_desc *desc)
 {
 	void __iomem *sync_regs = irq_desc_get_handler_data(desc);
-	u32 reg;
+	unsigned long reg;
 	int id;
+	struct irq_chip *chip = irq_get_chip(irq);
 
-	desc->irq_data.chip->irq_ack(&desc->irq_data);
+	chained_irq_enter(chip, desc);
 
 	reg = readl(sync_regs + HOST1X_SYNC_SYNCPT_THRESH_CPU0_INT_STATUS);
 
-	while ((id = __fls(reg)) >= 0) {
-		reg ^= BIT(id);
+	for_each_set_bit(id, &reg, 32)
 		generic_handle_irq(id + INT_SYNCPT_THRESH_BASE);
-	}
 
-	desc->irq_data.chip->irq_unmask(&desc->irq_data);
+	chained_irq_exit(chip, desc);
 }
 
 static struct irq_chip syncpt_thresh_irq = {
@@ -126,6 +126,7 @@ void __init syncpt_init_irq(void)
 {
 	void __iomem *sync_regs;
 	unsigned int i;
+	int irq;
 
 	sync_regs = ioremap(TEGRA_HOST1X_BASE + HOST1X_SYNC_OFFSET,
 			HOST1X_SYNC_SIZE);
@@ -136,15 +137,16 @@ void __init syncpt_init_irq(void)
 	writel(0xffffffffUL,
 		sync_regs + HOST1X_SYNC_SYNCPT_THRESH_CPU0_INT_STATUS);
 
-	for (i = INT_SYNCPT_THRESH_BASE; i < INT_GPIO_BASE; i++) {
-		irq_set_chip_and_handler(i, &syncpt_thresh_irq, handle_simple_irq);
-		irq_set_chip_data(i, sync_regs);
-		set_irq_flags(i, IRQF_VALID);
+	for (i = 0; i < INT_SYNCPT_THRESH_NR; i++) {
+		irq = INT_SYNCPT_THRESH_BASE + i;
+		irq_set_chip_and_handler(irq, &syncpt_thresh_irq,
+			handle_simple_irq);
+		irq_set_chip_data(irq, sync_regs);
+		set_irq_flags(irq, IRQF_VALID);
 	}
-	if (irq_set_handler_data(INT_HOST1X_MPCORE_SYNCPT, sync_regs))
-		BUG();
 	irq_set_chained_handler(INT_HOST1X_MPCORE_SYNCPT,
-				syncpt_thresh_cascade);
+		syncpt_thresh_cascade);
+	irq_set_handler_data(INT_HOST1X_MPCORE_SYNCPT, sync_regs);
 }
 
 void __init tegra_init_irq(void)
