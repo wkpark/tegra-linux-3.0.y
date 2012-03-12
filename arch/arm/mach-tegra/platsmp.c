@@ -157,6 +157,8 @@ void __init smp_init_cpus(void)
 
 	for (i = 0; i < ncores; i++)
 		cpu_set(i, cpu_possible_map);
+
+	set_smp_cross_call(gic_raise_softirq);
 }
 
 #if defined(CONFIG_PM) || defined(CONFIG_HOTPLUG_CPU)
@@ -252,17 +254,7 @@ void __init smp_prepare_cpus(unsigned int max_cpus)
 	}
 #endif
 
-	/*
-	 * Initialise the SCU if there are more than one CPU and let
-	 * them know where to start. Note that, on modern versions of
-	 * MILO, the "poke" doesn't actually do anything until each
-	 * individual core is sent a soft interrupt to get it out of
-	 * WFI
-	 */
-	if (max_cpus > 1) {
-		percpu_timer_setup();
-		scu_enable(scu_base);
-	}
+	scu_enable(scu_base);
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
