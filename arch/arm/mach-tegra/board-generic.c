@@ -23,8 +23,10 @@
 #include <linux/dma-mapping.h>
 #include <linux/pda_power.h>
 #include <linux/io.h>
+#ifdef CONFIG_USB_ANDROID
 #include <linux/usb/android_composite.h>
 #include <linux/usb/f_accessory.h>
+#endif
 #include <linux/i2c.h>
 
 #include <asm/mach-types.h>
@@ -469,9 +471,8 @@ static void __init tegra_generic_init(void)
 
 MACHINE_START(VENTANA, "NVIDIA Ventana Development System")
 	.boot_params  = 0x00000100,
-	.phys_io        = IO_APB_PHYS,
-	.io_pg_offst    = ((IO_APB_VIRT) >> 18) & 0xfffc,
 	.init_irq       = tegra_init_irq,
+	.init_early     = tegra_init_early,
 	.init_machine   = tegra_ventana_init,
 	.map_io         = tegra_map_common_io,
 	.timer          = &tegra_timer,
@@ -479,9 +480,8 @@ MACHINE_END
 
 MACHINE_START(HARMONY, "NVIDIA Harmony Development System")
 	.boot_params  = 0x00000100,
-	.phys_io        = IO_APB_PHYS,
-	.io_pg_offst    = ((IO_APB_VIRT) >> 18) & 0xfffc,
 	.init_irq       = tegra_init_irq,
+	.init_early     = tegra_init_early,
 	.init_machine   = tegra_harmony_init,
 	.map_io         = tegra_map_common_io,
 	.timer          = &tegra_timer,
@@ -490,9 +490,8 @@ MACHINE_END
 
 MACHINE_START(TEGRA_GENERIC, "Tegra 2 Development System")
 	.boot_params  = 0x00000100,
-	.phys_io        = IO_APB_PHYS,
-	.io_pg_offst    = ((IO_APB_VIRT) >> 18) & 0xfffc,
 	.init_irq       = tegra_init_irq,
+	.init_early     = tegra_init_early,
 	.init_machine   = tegra_generic_init,
 	.map_io         = tegra_map_common_io,
 	.timer          = &tegra_timer,

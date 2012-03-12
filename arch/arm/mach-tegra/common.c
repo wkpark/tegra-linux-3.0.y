@@ -123,7 +123,10 @@ void __init tegra_common_init(void)
 	tegra_init_clock();
 	tegra_init_cache();
 	tegra_init_fuse_cache();
-	tegra_dma_init();
 	tegra_mc_init();
+}
+
+void __init tegra_init_early(void)
+{
 	arm_pm_restart = tegra_machine_restart;
 }
