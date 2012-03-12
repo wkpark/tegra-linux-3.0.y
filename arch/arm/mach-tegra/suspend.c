@@ -258,7 +258,6 @@ static noinline void suspend_cpu_complex(void)
 
 	tegra_sctx.twd_ctrl = readl(twd_base + 0x8);
 	tegra_sctx.twd_load = readl(twd_base + 0);
-	local_timer_stop();
 
 	reg = readl(flow_ctrl + FLOW_CTRL_CPU_CSR);
 	/* clear any pending events, set the WFE bitmap to specify just
