@@ -2295,7 +2295,7 @@ static irqreturn_t fsl_udc_irq(int irq, void *_udc)
 		if (fsl_readl(&dr_regs->endptsetupstat) & EP_SETUP_STATUS_EP0) {
 			/* Setup packet received, we are connected to host and
 			 * not charger. Cancel any delayed work */
-			cancel_delayed_work(&udc->work);
+			__cancel_delayed_work(&udc->work);
 			tripwire_handler(udc, 0,
 					(u8 *) (&udc->local_setup_buff));
 			setup_received_irq(udc, &udc->local_setup_buff);
