@@ -95,7 +95,7 @@ static int 		open(	struct inode *inode, 	struct file *file										);
 static int 		release(	struct inode *inode, 	struct file *file										);
 static ssize_t 	read(	struct file *file, 	char *buf, 		size_t count, 		loff_t *ppos		);
 static ssize_t 	write(	struct file *file, 	const char *buf, 	size_t count, 		loff_t *ppos		);
-static int 		ioctl(		struct inode *inode, 	struct file *file, 	unsigned int cmd, 	unsigned long arg	);
+static long 		ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 
 //20101218 km.lee@lge.com vib disable on reboot [START]
 static int 		brr_open(	struct inode *inode, 	struct file *file										);
@@ -107,7 +107,7 @@ static struct 	file_operations fops =
 	.owner	=	THIS_MODULE,
     	.read 	=     	read,
     	.write 	=    	write,
-    	.ioctl 	=    	ioctl,
+	.unlocked_ioctl	= ioctl,
     	.open 	=     	open,
     	.release 	=  	release
 };
@@ -463,7 +463,7 @@ static ssize_t write( struct file *file, const char *buf, size_t count, loff_t *
 
 }
 
-static int ioctl( struct inode *inode, struct file *file, unsigned int cmd, unsigned long arg )
+static long ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 
 #ifdef QA_TEST

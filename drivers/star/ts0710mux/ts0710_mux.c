@@ -208,7 +208,7 @@ static volatile struct file * mux_filp[TS0710MAX_CHANNELS];
 static ts0710_con ts0710_connection;
 
 #ifdef LGE_KERNEL_MUX
-static DECLARE_MUTEX(spi_write_sema); /* use semaphore to synchronize different threads*/
+static DEFINE_SEMAPHORE(spi_write_sema); /* use semaphore to synchronize different threads*/
 static struct semaphore spi_write_data_sema[33];
 
 struct spi_data_recived_struct {
@@ -226,7 +226,7 @@ struct spi_data_send_struct {
     int size;
 };
 
-static LOCK_T frame_nodes_lock = SPIN_LOCK_UNLOCKED;
+static DEFINE_SPINLOCK(frame_nodes_lock);
 static unsigned long lock_flag ;
 static struct spi_data_send_struct frame_node[MAX_WAITING_FRAMES];
 static struct spi_data_send_struct *frame_to_send[TS0710MAX_PRIORITY_NUMBER];          

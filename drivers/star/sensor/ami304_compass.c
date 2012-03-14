@@ -564,7 +564,7 @@ static int ami304_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int ami304_ioctl(struct inode *inode, struct file *file, unsigned int cmd,unsigned long arg)
+static long ami304_ioctl(struct file *file, unsigned int cmd,unsigned long arg)
 {
 	char strbuf[AMI304_BUFSIZE];
 	int controlbuf[10];
@@ -700,7 +700,7 @@ static int ami304daemon_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int ami304daemon_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
+static long ami304daemon_ioctl(struct file *file, unsigned int cmd,
 		unsigned long arg)
 {
 	int valuebuf[4];
@@ -868,7 +868,7 @@ static int ami304hal_release(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int ami304hal_ioctl(struct inode *inode, struct file *file, unsigned int cmd,unsigned long arg)
+static long ami304hal_ioctl(struct file *file, unsigned int cmd,unsigned long arg)
 {
 	char strbuf[AMI304_BUFSIZE];
 	void __user *data;
@@ -940,7 +940,7 @@ static struct file_operations ami304_fops = {
 	.owner = THIS_MODULE,
 	.open = ami304_open,
 	.release = ami304_release,
-	.ioctl = ami304_ioctl,
+	.unlocked_ioctl = ami304_ioctl,
 };
 
 static struct miscdevice ami304_device = {
@@ -954,7 +954,7 @@ static struct file_operations ami304daemon_fops = {
 	.owner = THIS_MODULE,
 	.open = ami304daemon_open,
 	.release = ami304daemon_release,
-	.ioctl = ami304daemon_ioctl,
+	.unlocked_ioctl = ami304daemon_ioctl,
 };
 
 static struct miscdevice ami304daemon_device = {
@@ -967,7 +967,7 @@ static struct file_operations ami304hal_fops = {
 	.owner = THIS_MODULE,
 	.open = ami304hal_open,
 	.release = ami304hal_release,
-	.ioctl = ami304hal_ioctl,
+	.unlocked_ioctl = ami304hal_ioctl,
 };
 
 static struct miscdevice ami304hal_device = {

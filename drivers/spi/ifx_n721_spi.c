@@ -30,7 +30,6 @@
 #include <linux/errno.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
-#include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include <linux/irq.h>
 #include <mach/gpio.h>
@@ -152,7 +151,7 @@ struct ifx_spi_data {
 	unsigned		users;
         unsigned int		throttle;
         struct work_struct      ifx_work;
-        struct work_queue_struct *ifx_wq;
+        struct workqueue_struct *ifx_wq;
 //20100927-1, syblue.lee@lge.com, Hold wake-lock for cp interrupt [START]
 #ifdef WAKE_LOCK_RESUME
 	struct wake_lock wake_lock;
