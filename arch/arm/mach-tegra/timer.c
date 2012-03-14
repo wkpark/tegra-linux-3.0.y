@@ -65,9 +65,8 @@ static void __iomem *rtc_base = IO_ADDRESS(TEGRA_RTC_BASE);
 #define timer_readl(reg) \
 	__raw_readl((u32)timer_reg_base + (reg))
 
-static u64 tegra_sched_clock_offset;
-static u64 tegra_sched_clock_suspend_val;
-static u64 tegra_sched_clock_suspend_rtc;
+static u32 usec_offset;
+static bool usec_suspended;
 
 static int tegra_timer_set_next_event(unsigned long cycles,
 					 struct clock_event_device *evt)
@@ -133,31 +132,36 @@ static DEFINE_CLOCK_DATA(cd);
 #define SC_MULT		4194304000u
 #define SC_SHIFT	22
 
+static u32 notrace tegra_read_usec(void)
+{
+	u32 cyc = usec_offset;
+	if (!usec_suspended)
+		cyc += timer_readl(TIMERUS_CNTR_1US);
+	return cyc;
+}
+
 unsigned long long notrace sched_clock(void)
 {
-	u32 cyc = timer_readl(TIMERUS_CNTR_1US);
-	return tegra_sched_clock_offset +
-		cyc_to_fixed_sched_clock(&cd, cyc, (u32)~0, SC_MULT, SC_SHIFT);
+	u32 cyc = tegra_read_usec();
+	return cyc_to_fixed_sched_clock(&cd, cyc, (u32)~0, SC_MULT, SC_SHIFT);
 }
 
 static void notrace tegra_update_sched_clock(void)
 {
-	u32 cyc = timer_readl(TIMERUS_CNTR_1US);
+	u32 cyc = tegra_read_usec();
 	update_sched_clock(&cd, cyc, (u32)~0);
 }
 
 static void tegra_sched_clock_suspend(void)
 {
-	tegra_sched_clock_suspend_val = sched_clock();
-	tegra_sched_clock_suspend_rtc = tegra_rtc_read_ms();
+	usec_offset += timer_readl(TIMERUS_CNTR_1US);
+	usec_suspended = true;
 }
 
 static void tegra_sched_clock_resume(void)
 {
-	u64 rtc_offset_ms = tegra_rtc_read_ms() - tegra_sched_clock_suspend_rtc;
-	tegra_sched_clock_offset = tegra_sched_clock_suspend_val +
-		rtc_offset_ms * NSEC_PER_MSEC -
-		(sched_clock() - tegra_sched_clock_offset);
+	usec_offset -= timer_readl(TIMERUS_CNTR_1US);
+	usec_suspended = false;
 }
 
 /*
