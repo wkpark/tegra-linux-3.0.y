@@ -128,4 +128,8 @@ source "drivers/hwspinlock/Kconfig"
 
 source "drivers/clocksource/Kconfig"
 
+
+#/ LGE_DOM_UPDATE_S suyong.han 2010/09/12 {
+source "drivers/broadcast/Kconfig"
+#/ LGE_DOM_UPDATE_E suyong.han 2010/09/12 }
 endmenu

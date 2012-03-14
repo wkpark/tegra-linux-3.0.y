@@ -54,6 +54,12 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
+
+extern void star_shutdown_prepare();
+#if defined (CONFIG_MACH_STAR)
+#include <mach/board-star-debug.h>
+#endif
+
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)
 #endif
@@ -374,10 +380,15 @@ EXPORT_SYMBOL_GPL(kernel_halt);
  */
 void kernel_power_off(void)
 {
+	SUSPEND_LOG(KERN_EMERG "[PowerOff] kernel_power_off() start !! \n");
 	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
+	SUSPEND_LOG(KERN_EMERG "[PowerOff] kernel_power_off() :: kernel_shutdown_prepare() end !! \n");
 	if (pm_power_off_prepare)
 		pm_power_off_prepare();
+	star_shutdown_prepare();
+	SUSPEND_LOG(KERN_EMERG "[PowerOff] kernel_power_off() :: pm_power_off_prepare() end !! \n");
 	disable_nonboot_cpus();
+	SUSPEND_LOG(KERN_EMERG "[PowerOff] kernel_power_off() :: disable_nonboot_cpus() end !! \n");
 	syscore_shutdown();
 	printk(KERN_EMERG "Power down.\n");
 	kmsg_dump(KMSG_DUMP_POWEROFF);
@@ -439,6 +450,7 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 		panic("cannot halt");
 
 	case LINUX_REBOOT_CMD_POWER_OFF:
+		SUSPEND_LOG(KERN_EMERG "[PowerOff] SYSCALL_DEFINE4 :: call kernel_power_off() !! \n");
 		kernel_power_off();
 		do_exit(0);
 		break;
@@ -1870,6 +1882,7 @@ int orderly_poweroff(bool force)
 		   sync and poweroff asap.  Or not even bother syncing
 		   if we're doing an emergency shutdown? */
 		emergency_sync();
+		SUSPEND_LOG(KERN_EMERG "[PowerOff] orderly_poweroff :: call kernel_power_off() !! \n");
 		kernel_power_off();
 	}
 

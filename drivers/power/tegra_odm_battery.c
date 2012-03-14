@@ -454,13 +454,18 @@ static int tegra_battery_remove(struct platform_device *pdev)
 		device_remove_file(&pdev->dev, &tegra_battery_attr);
 
 		del_timer_sync(&(batt_dev->battery_poll_timer));
+//cs77.ha@lge.com this is froyo 10.7.2 source but build ERROR [START]
+#if 0
                 if (batt_dev->hOdmBattDev) {
                         NvOdmBatteryDeviceClose(batt_dev->hOdmBattDev);
                         batt_dev->hOdmBattDev = NULL;
                 }
+#endif
+//cs77.ha@lge.com this is froyo 10.7.2 source but build ERROR [END]
 		kfree(batt_dev);
 		batt_dev = NULL;
 	}
+
 	return 0;
 }
 

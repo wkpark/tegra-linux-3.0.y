@@ -49,4 +49,7 @@ static inline int irq_to_gpio(unsigned int irq)
 void tegra_gpio_enable(int gpio);
 void tegra_gpio_disable(int gpio);
 
+// 20110209 byoungwoo.yoon@lge.com disable gpio interrupt during power-off 
+void tegra_gpio_disable_all_irq(void);
+
 #endif

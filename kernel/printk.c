@@ -43,6 +43,9 @@
 #include <linux/rculist.h>
 
 #include <asm/uaccess.h>
+#if defined (CONFIG_MACH_STAR)
+#include <mach/board-star-debug.h>
+#endif
 
 /*
  * Architectures can override it:
@@ -153,6 +156,19 @@ static char *log_buf = __log_buf;
 static int log_buf_len = __LOG_BUF_LEN;
 static unsigned logged_chars; /* Number of chars produced since last read+clear operation */
 static int saved_console_loglevel = -1;
+
+/* 20100916 taewan.kim@lge.com set default loglevel [START] */
+#if defined(CONFIG_MACH_STAR)
+void set_default_loglevel()
+{
+    console_printk[0] = DEFAULT_CONSOLE_LOGLEVEL;
+    console_printk[1] = DEFAULT_MESSAGE_LOGLEVEL;
+    console_printk[2] = MINIMUM_CONSOLE_LOGLEVEL;
+    console_printk[3] = DEFAULT_CONSOLE_LOGLEVEL;
+}
+EXPORT_SYMBOL(set_default_loglevel);
+#endif
+/* 20100916 taewan.kim@lge.com set default loglevel [END] */
 
 #ifdef CONFIG_KEXEC
 /*
@@ -1153,6 +1169,11 @@ int update_console_cmdline(char *name, int idx, char *name_new, int idx_new, cha
 int console_suspend_enabled = 1;
 EXPORT_SYMBOL(console_suspend_enabled);
 
+#if defined (CONFIG_MACH_STAR)
+extern int __init star_get_debug_type(char *str);
+early_param("rs", star_get_debug_type);
+#endif
+
 static int __init console_suspend_disable(char *str)
 {
 	console_suspend_enabled = 0;
@@ -1167,6 +1188,7 @@ __setup("no_console_suspend", console_suspend_disable);
  */
 void suspend_console(void)
 {
+	SUSPEND_LOG("[SUSPEND] : Suspending console(s) (use console_suspend to debug)\n");
 	if (!console_suspend_enabled)
 		return;
 	printk("Suspending console(s) (use no_console_suspend to debug)\n");

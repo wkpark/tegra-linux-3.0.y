@@ -27,9 +27,18 @@
 #include <linux/platform_device.h>
 #include <linux/suspend.h>
 #include <linux/percpu.h>
+#include <linux/kthread.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+//+++ INKSPOT: 22/june/2011 - to check NVRM response time
+#include <linux/time.h> 
+//--- INKSPOT: 22/june/2011
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 #endif
+
+#include <mach/io.h>
+
 #include "nvcommon.h"
 #include "nvassert.h"
 #include "nvos.h"
@@ -63,6 +72,8 @@ static long nvrm_unlocked_ioctl(struct file *file,
     unsigned int cmd, unsigned long arg);
 static int nvrm_mmap(struct file *file, struct vm_area_struct *vma);
 extern void reset_cpu(unsigned int cpu, unsigned int reset);
+extern void NvRmPrivLockSharedPll(void);
+extern void NvRmPrivUnlockSharedPll(void);
 extern void NvRmPrivDvsStop(void);
 extern void NvRmPrivDvsRun(void);
 
@@ -575,7 +586,11 @@ static struct kobj_attribute nvrm_notifier_attribute =
 
 static void notify_daemon(const char* notice)
 {
-    long timeout = HZ * 30;
+    //+++ INKSPOT; 23/june/2011, Change from NV #842311
+    long timeout = HZ * 150; 
+    struct timeval t;
+    struct tm result;
+    //--- INKSPOT
 
     // In case daemon's pid is not reported, do not signal or wait.
     if (!s_nvrm_daemon_pid) {
@@ -594,7 +609,19 @@ static void notify_daemon(const char* notice)
     printk(KERN_INFO "%s: wait for nvrm_daemon\n", __func__);
     if (wait_event_timeout(tegra_pm_notifier_wait,
                    tegra_pm_notifier_continue_ok, timeout) == 0) {
+        //+++ INKSPOT : 23/june/2011 - To check response time from NVRM
+        do_gettimeofday(&t); 
+        time_to_tm(t.tv_sec, 0, &result); 
+        printk("Time: %ld-%d-%d %d:%d:%d \n", 
+            (result.tm_year + 1900), 
+            (result.tm_mon + 1), 
+            result.tm_mday, 
+            result.tm_hour, 
+            result.tm_min, 
+            result.tm_sec);
+        //--- INKSPOT :
         printk(KERN_ERR "%s: timed out. nvrm_daemon did not reply\n", __func__);
+        panic("BUG!");
     }
 
     // Go back to the initial state.
@@ -609,11 +636,13 @@ int tegra_pm_notifier(struct notifier_block *nb,
     // Notify the event to nvrm_daemon.
     switch (event) {
     case PM_SUSPEND_PREPARE:
+        NvRmPrivLockSharedPll();
+        NvRmPrivDvsStop();
+        NvRmPrivUnlockSharedPll();
 #ifndef CONFIG_HAS_EARLYSUSPEND
         notify_daemon(STRING_PM_DISPLAY_OFF);
 #endif
         notify_daemon(STRING_PM_SUSPEND_PREPARE);
-        NvRmPrivDvsStop();
         break;
     case PM_POST_SUSPEND:
         notify_daemon(STRING_PM_POST_SUSPEND);
@@ -634,12 +663,16 @@ int tegra_pm_notifier(struct notifier_block *nb,
 #ifdef CONFIG_HAS_EARLYSUSPEND
 void tegra_display_off(struct early_suspend *h)
 {
+    printk("%s: start notify daemon for STRING_PM_DISPLAY_OFF \n",__func__);
     notify_daemon(STRING_PM_DISPLAY_OFF);
+    printk("%s: end notify daemon for STRING_PM_DISPLAY_OFF \n",__func__);
 }
 
 void tegra_display_on(struct early_suspend *h)
 {
+    printk("%s: start notify daemon for STRING_PM_DISPLAY_ON \n",__func__);
     notify_daemon(STRING_PM_DISPLAY_ON);
+    printk("%s: end notify daemon for STRING_PM_DISPLAY_ON \n",__func__);
 }
 
 static struct early_suspend tegra_display_power =

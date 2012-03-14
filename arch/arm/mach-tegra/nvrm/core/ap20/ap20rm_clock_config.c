@@ -540,7 +540,21 @@ Ap20EmcTimingSet(
 
     for (i = 0; i < s_Ap20EmcConfig.EmcTimingRegNum; i++)
     {
+	    //20110218, cs77.ha@lge.com, DVFS patch [START]
+	    #if 1
+        if (s_Ap20EmcConfig.pEmcTimingReg[i] == EMC_DLL_XFORM_DQS_0)
+        {
+            NvU32 mask =
+                NV_DRF_NUM(EMC, DLL_XFORM_DQS, XFORM_DQS_OFFS, 0xFFFFFFFFUL);
+            NvU32 offs = NV_DRF_NUM(EMC, DLL_XFORM_DQS, XFORM_DQS_OFFS, 0xC0);
+            d = pEmcConfig->pOdmEmcConfig->EmcTimingParameters[i];
+            d = ((((d & mask) << 2) - offs) & mask) | (d & (~mask));
+        }
+        else if (s_Ap20EmcConfig.pEmcTimingReg[i] == EMC_CFG_DIG_DLL_0)
+	    #else
         if (i == EMC_CFG_DIG_DLL_INDEX)
+	    #endif
+	    //20110218, cs77.ha@lge.com, DVFS patch [END]
             d = pEmcConfig->EmcDigDll;
         else
             d = pEmcConfig->pOdmEmcConfig->EmcTimingParameters[i];
@@ -561,7 +575,7 @@ Ap20EmcTimingSetFinish(
     NvRmDeviceHandle hRmDevice,
     const NvRmAp20EmcTimingConfig* pEmcConfig)
 {
-    NvU32 a, d;
+    NvU32 a, d, i;
     NV_ASSERT(s_pEmcBaseReg);
 
     // After EMC clock change is completed, digital DLL should be restarted
@@ -570,11 +584,12 @@ Ap20EmcTimingSetFinish(
         return;
 
     a = (((NvU32)(s_pEmcBaseReg)) + EMC_INTSTATUS_0);
-    for (;;)
+    for (i=0;i<10;i++)
     {
         d = NV_DRF_VAL(EMC, INTSTATUS, CLKCHANGE_COMPLETE_INT, NV_READ32(a));
         if (d)
             break;
+        NvOsWaitUS(1);
     }
 
     a = (((NvU32)(s_pEmcBaseReg)) + EMC_CFG_DIG_DLL_0);

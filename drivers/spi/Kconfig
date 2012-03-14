@@ -40,9 +40,8 @@ config SPI_DEBUG
 #
 
 config SPI_MASTER
-#	boolean "SPI Master Support"
-	boolean
-	default SPI
+	boolean "SPI Master Support"
+	default y if SPI
 	help
 	  If your system has an master-capable SPI controller (which
 	  provides the clock and chipselect), you can enable that
@@ -377,13 +376,6 @@ config SPI_STMP3XXX
 	help
 	  SPI driver for Freescale STMP37xx/378x SoC SSP interface
 
-config SPI_TEGRA
-	tristate "Nvidia Tegra SPI controller"
-	depends on ARCH_TEGRA
-	select TEGRA_SYSTEM_DMA
-	help
-	  SPI driver for NVidia Tegra SoCs
-
 config SPI_TI_SSP
 	tristate "TI Sequencer Serial Port - SPI Support"
 	depends on MFD_TI_SSP
@@ -453,6 +445,14 @@ config SPI_DW_MMIO
 # being probably the most widely used ones.
 #
 comment "SPI Protocol Masters"
+#// LGE_DOM_UPDATE_S suyong.han 2010/09/12 {
+config SPI_TDMB
+	tristate "SPI LG2102 from LG SIC"
+	default n
+	depends on ARCH_TEGRA
+	help
+	Enable this driver to support LG SIC2102 RFBB chipset
+#// LGE_DOM_UPDATE_E suyong.han 2010/09/12 }
 
 config SPI_SPIDEV
 	tristate "User mode SPI device driver support"
@@ -479,5 +479,34 @@ config SPI_TLE62X0
 endif # SPI_MASTER
 
 # (slave support would go here)
+config SPI_SLAVE
+#	boolean "SPI Slave Support"
+	boolean
+	help
+	  If your system has an slave-capable SPI controller , you can enable that 
+	  controller and the protocol drivers for the SPI master chips that are 
+	  connected.
+
+if SPI_SLAVE
+comment "SPI Slave Controller Drivers"
+config SPI_SLAVE_TEGRA
+	boolean "SPI slave driver for NVIDIA Tegra SoCs"
+	depends on ARCH_TEGRA
+	help
+	  Enables the integrated SPI controllers as slave on NVIDIA Tegra SoCs
+
+config SPI_MDM6600
+	tristate "SPI MDM6600 from Qualcom"
+	depends on ARCH_TEGRA
+	help
+	Enable this driver to support MDM6600 Modem
+endif # SPI_SLAVE
+
+comment "DUAL SPI support for HSPA+"
+config DUAL_SPI
+	boolean "Dual SPI slave driver for NVIDIA Tegra SoCs"
+	depends on ARCH_TEGRA
+	help
+	  Enables the integrated Dual SPI controllers as slave on NVIDIA Tegra SoCs
 
 endif # SPI

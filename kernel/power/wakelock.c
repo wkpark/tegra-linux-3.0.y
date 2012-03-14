@@ -31,7 +31,7 @@ enum {
 	DEBUG_EXPIRE = 1U << 3,
 	DEBUG_WAKE_LOCK = 1U << 4,
 };
-static int debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP;
+static int debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP | DEBUG_SUSPEND;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
 #define WAKE_LOCK_TYPE_MASK              (0x0f)
@@ -40,6 +40,10 @@ module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 #define WAKE_LOCK_AUTO_EXPIRE            (1U << 10)
 #define WAKE_LOCK_PREVENTING_SUSPEND     (1U << 11)
 
+#if defined (CONFIG_MACH_STAR)
+#include <mach/board-star-debug.h>
+extern void star_watchdog_disable();
+#endif
 static DEFINE_SPINLOCK(list_lock);
 static LIST_HEAD(inactive_locks);
 static struct list_head active_wake_locks[WAKE_LOCK_TYPE_COUNT];
@@ -296,6 +300,11 @@ static void suspend(struct work_struct *work)
 			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
 			tm.tm_hour, tm.tm_min, tm.tm_sec, ts_exit.tv_nsec);
 	}
+	if(/*is_star_suspend_debug()*/1)
+	{
+		SUSPEND_LOG("[SUSPEND]: star_watchdog_disable() called at power_suspend_late()\n");
+		star_watchdog_disable();
+	}
 
 	if (ts_exit.tv_sec - ts_entry.tv_sec <= 1) {
 		++suspend_short_count;
@@ -340,6 +349,13 @@ static int power_suspend_late(struct device *dev)
 #ifdef CONFIG_WAKELOCK_STAT
 	wait_for_wakeup = !ret;
 #endif
+
+     if(/*is_star_suspend_debug()*/1)
+     {  
+	  SUSPEND_LOG("[SUSPEND] : star_watchdog_disable() called at power_suspend_late() \n");
+	  star_watchdog_disable();
+     }
+
 	if (debug_mask & DEBUG_SUSPEND)
 		pr_info("power_suspend_late return %d\n", ret);
 	return ret;
@@ -559,6 +575,54 @@ static const struct file_operations wakelock_stats_fops = {
 	.release = single_release,
 };
 
+//20101008, byoungwoo.yoon@lge.com, add sysfs to check the status of the active wakelocks  [START]
+
+static int active_wakelock_stats_show(struct seq_file *m, void *unused)
+{
+	unsigned long irqflags;
+	struct wake_lock *lock;
+	bool print_expired = true;
+	int ret;
+	int type = WAKE_LOCK_SUSPEND;
+	
+	spin_lock_irqsave(&list_lock, irqflags);
+
+	list_for_each_entry(lock, &active_wake_locks[type], link) {
+		if (lock->flags & WAKE_LOCK_AUTO_EXPIRE) {
+			long timeout = lock->expires - jiffies;
+			if (timeout > 0)
+				seq_printf(m, "active wake lock %s, time left %ld\n",
+					lock->name, timeout);
+			else if (print_expired)
+				seq_printf(m, "wake lock %s, expired\n", lock->name);
+		} else {
+			seq_printf(m, "active wake lock %s\n", lock->name);
+			if (!debug_mask & DEBUG_EXPIRE)
+				print_expired = false;
+		}
+	}
+
+	spin_unlock_irqrestore(&list_lock, irqflags);
+	return 0;
+}
+
+
+
+static int active_wakelock_stats_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, active_wakelock_stats_show, NULL);
+}
+
+static const struct file_operations active_wakelock_stats_fops = {
+	.owner = THIS_MODULE,
+	.open = active_wakelock_stats_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
+//20101008, byoungwoo.yoon@lge.com, add sysfs to check the status of the active wakelocks  [START]
+
+
 static int __init wakelocks_init(void)
 {
 	int ret;
@@ -598,6 +662,12 @@ static int __init wakelocks_init(void)
 	proc_create("wakelocks", S_IRUGO, NULL, &wakelock_stats_fops);
 #endif
 
+	//20101008, byoungwoo.yoon@lge.com, add sysfs to check the status of the active wakelocks  [START]
+	proc_create("active_wakelocks", S_IRUGO, NULL, &active_wakelock_stats_fops);
+	//20101008, byoungwoo.yoon@lge.com, add sysfs to check the status of the active wakelocks  [START]
+
+    if (is_star_suspend_debug()) 
+	debug_mask = DEBUG_EXIT_SUSPEND | DEBUG_WAKEUP | DEBUG_SUSPEND;
 	return 0;
 
 err_suspend_work_queue:

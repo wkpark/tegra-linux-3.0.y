@@ -307,6 +307,9 @@ typedef NvS32 NvAudioFxIoDevice;
 #define NvAudioFxIoDevice_BuiltInMic (0x1)
 #define NvAudioFxIoDevice_Mic (0x2)
 #define NvAudioFxIoDevice_LineIn (0x4)
+#define NvAudioFxIoDevice_BACK_MIC (0x8) //20101103  seki.par@lge.com VT speak ModeLGE_LAB1]
+#define NvAudioFxIoDevice_VR_Mode_Mask (0x10) //20101214 jin333.kim@lge.com VR mode on
+
 
 // Outputs
 #define NvAudioFxIoDevice_BuiltInSpeaker (0x100)
@@ -507,15 +510,20 @@ typedef struct NvAudioFxIoChangeMessageRec
     NvAudioFxConnectionDescriptor Connection;
 } NvAudioFxIoChangeMessage;
 
+// 20110223, lake.kim@lge.com, media server restart 2 [start]
  /**
  * @brief Initializes and opens the AudioFX Mixer.
  *
- * @retval NvAudioFxMixerHandle A non-NULL value will be returned if the mixer
- * is successfully opened.
+  * @param phMixer pointer to Mixer Handle.  This API
+  * opens a new AudioFx Mixer Handle and returns it
+  * through phMixer.
+  *
+  * @retval NvSuccess Indicates the operation succeeded.
  */
 
- NvAudioFxMixerHandle NvddkAudioFxMixerOpen(
-    void  );
+ NvError NvddkAudioFxMixerOpen(
+    NvAudioFxMixerHandle * phMixer );
+// 20110223, lake.kim@lge.com, media server restart 2 [end]
 
  /**
  * @brief Closes the AudioFX Mixer. This function frees the resources associated
@@ -624,7 +632,9 @@ typedef struct NvAudioFxIoChangeMessageRec
 
 typedef struct NvddkAudioFxFxnTableRec
 {
-    NvAudioFxMixerHandle (*MixerOpen)(void);
+// 20110223, lake.kim@lge.com, media server restart 2 [start]
+    NvError (*MixerOpen)(NvAudioFxMixerHandle* phMixer);
+// 20110223, lake.kim@lge.com, media server restart 2 [end]
     void (*MixerClose)(NvAudioFxMixerHandle hMixer);
     NvAudioFxObjectHandle (*MixerCreateObject)(NvAudioFxMixerHandle hMixer, NvObjectId Id);
     void (*MixerDestroyObject)(NvAudioFxObjectHandle hObject);

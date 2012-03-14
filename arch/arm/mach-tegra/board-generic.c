@@ -47,6 +47,8 @@
 #include "nvodm_query_discovery.h"
 #include "board.h"
 
+#define ADXL34X_IRQ_GPIO	TEGRA_GPIO_PAA1
+
 #ifdef CONFIG_USB_ANDROID
 
 static char *tegra_android_functions_ums[] = {
@@ -114,6 +116,18 @@ static char *tegra_android_functions_all[] = {
 };
 
 static struct android_usb_product tegra_android_products[] = {
+#if defined(CONFIG_MACH_STAR)
+	[0] = {
+		.product_id = 0x618E,
+		.num_functions = ARRAY_SIZE(tegra_android_functions_ums_adb),
+		.functions = tegra_android_functions_ums_adb,
+	},
+	[1] = {
+		.product_id = 0x6000,
+		.num_functions = ARRAY_SIZE(tegra_android_functions_ums),
+		.functions = tegra_android_functions_ums,
+	},
+#else
 	[0] = {
 		.product_id = 0x7100,
 		.num_functions = ARRAY_SIZE(tegra_android_functions_ums),
@@ -124,6 +138,7 @@ static struct android_usb_product tegra_android_products[] = {
 		.num_functions = ARRAY_SIZE(tegra_android_functions_ums_adb),
 		.functions = tegra_android_functions_ums_adb,
 	},
+#endif
 	[2] = {
 		.product_id = 0x7102,
 		.num_functions = ARRAY_SIZE(tegra_android_functions_rndis),
@@ -152,9 +167,14 @@ static struct android_usb_product tegra_android_products[] = {
 
 static char *harmony_dev = "NVIDIA Harmony";
 static char *ventana_dev = "NVIDIA Ventana";
+#if defined(CONFIG_MACH_STAR)
+static char *generic_dev = "LGE Android Phone";
+#else
 static char *generic_dev = "NVIDIA Tegra 2";
+#endif
 
 static struct android_usb_platform_data tegra_android_platform = {
+#ifndef CONFIG_MACH_STAR
 	.vendor_id = 0x955,
 	.product_id = 0x7100,
 	.manufacturer_name = "NVIDIA",
@@ -162,6 +182,15 @@ static struct android_usb_platform_data tegra_android_platform = {
 	.products = tegra_android_products,
 	.num_functions = ARRAY_SIZE(tegra_android_functions_all),
 	.functions = tegra_android_functions_all,
+#else
+	.vendor_id = 0x1004,
+	.product_id = 0x618E,
+	.manufacturer_name = "LG Electronics",
+	.num_products = ARRAY_SIZE(tegra_android_products),
+	.products = tegra_android_products,
+	.num_functions = ARRAY_SIZE(tegra_android_functions_all),
+	.functions = tegra_android_functions_all,
+#endif
 };
 static struct platform_device tegra_android_device = {
 	.name = "android_usb",
@@ -172,8 +201,13 @@ static struct platform_device tegra_android_device = {
 };
 #ifdef CONFIG_USB_ANDROID_MASS_STORAGE
 static struct usb_mass_storage_platform_data tegra_usb_fsg_platform = {
+#if defined (CONFIG_MACH_STAR)
+	.vendor = "LGE",
+	.product = "Android Phone",
+#else
 	.vendor = "NVIDIA",
 	.product = "Tegra 2",
+#endif
 	.nluns = 1,
 	.bulk_size = 16384,
 };
@@ -220,6 +254,12 @@ static struct i2c_board_info bus0_i2c_devices[] = {
 	{
 		I2C_BOARD_INFO("isl29018", 0x44),
 		.irq = (INT_GPIO_BASE + TEGRA_GPIO_PZ2),
+	},
+#endif
+#ifdef CONFIG_INPUT_ADXL34X_I2C
+	{
+		I2C_BOARD_INFO("adxl34x", 0x1D),
+		.irq = (INT_GPIO_BASE + ADXL34X_IRQ_GPIO),
 	},
 #endif
 };
@@ -462,6 +502,14 @@ err_free_dev:
 static inline void tegra_setup_bluesleep_csr(void) { }
 #endif
 
+#ifdef CONFIG_INPUT_ADXL34X
+static void board_adxl34x_init(void)
+{
+	tegra_gpio_enable(ADXL34X_IRQ_GPIO);
+	gpio_request(ADXL34X_IRQ_GPIO, "adxl34x");
+	gpio_direction_input(ADXL34X_IRQ_GPIO);
+}
+#endif
 
 static void __init tegra_harmony_init(void)
 {
@@ -472,6 +520,9 @@ static void __init tegra_harmony_init(void)
 	tegra_setup_bluesleep_csr();
 }
 
+#ifdef CONFIG_MACH_TEGRA_GENERIC
+extern board_setup_wifi();
+#endif
 
 static void __init tegra_ventana_init(void)
 {
@@ -482,7 +533,9 @@ static void __init tegra_ventana_init(void)
 	i2c_device_setup();
 	tegra_setup_32khz_clock();
 	tegra_setup_bluesleep();
-	ventana_setup_wifi();
+#ifdef CONFIG_MACH_TEGRA_GENERIC
+	board_setup_wifi();
+#endif
 }
 
 static void __init tegra_generic_init(void)
@@ -491,8 +544,17 @@ static void __init tegra_generic_init(void)
 	tegra_android_platform.product_name = generic_dev;
 #endif
 	do_system_init(true, true);
-        register_spi_ipc_devices();
-	tegra_setup_bluesleep_csr();
+	if (ARRAY_SIZE(bus0_i2c_devices))
+		i2c_register_board_info(0, bus0_i2c_devices,
+					ARRAY_SIZE(bus0_i2c_devices));
+	register_spi_ipc_devices();
+	tegra_setup_bluesleep();
+#ifdef CONFIG_MACH_TEGRA_GENERIC
+	board_setup_wifi();
+#endif
+#ifdef CONFIG_INPUT_ADXL34X
+	board_adxl34x_init();
+#endif
 }
 
 MACHINE_START(VENTANA, "NVIDIA Ventana Development System")

@@ -128,8 +128,35 @@ void arm_machine_flush_console(void)
 }
 #endif
 
+extern void write_cmd_reserved_buffer(unsigned char *buf, size_t len);
+extern void read_cmd_reserved_buffer(unsigned char * buf,size_t len);
 void arm_machine_restart(char mode, const char *cmd)
 {
+#if defined (CONFIG_MACH_STAR)
+	unsigned char tmpbuf[3] = { NULL, };
+        if (cmd)
+        {
+         strncpy(tmpbuf, cmd, 3);
+        }
+        else
+        {
+          tmpbuf[0] = 'w';
+        }
+
+	switch (tmpbuf[0])
+	{
+	    case 'z':
+		break;
+	    case 'i': //imediately -> wm
+		case 'p': // panic -> wa
+		default:
+		tmpbuf[0] ='w';
+		break;
+	}
+	write_cmd_reserved_buffer(tmpbuf,3);
+	read_cmd_reserved_buffer(tmpbuf,3);
+	printk("arm_machine_restart : tmpbuf = %s\n", (unsigned char *)tmpbuf);
+#endif
 	/* Flush the console to make sure all the relevant messages make it
 	 * out to the console drivers */
 	arm_machine_flush_console();
@@ -149,7 +176,16 @@ void arm_machine_restart(char mode, const char *cmd)
 	flush_cache_all();
 
 	/* Turn off caching */
+//20110124, byoungwoo.yoon@lge.com, fix lockup during reset [START]
+#if defined(CONFIG_MACH_STAR)
+	if (cmd == NULL)
+		cpu_proc_fin();
+	else if (*cmd != 'p')
+		cpu_proc_fin();		
+#else
 	cpu_proc_fin();
+#endif
+//20110124, byoungwoo.yoon@lge.com, fix lockup during reset [END]
 
 	/* Push out any further dirty data, and ensure cache is empty */
 	flush_cache_all();

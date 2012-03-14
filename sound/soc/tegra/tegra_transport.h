@@ -106,6 +106,9 @@ typedef struct NvFxTransportMessageResultRec {
 typedef struct NvFxTransportMessageMixerOpenRec {
 	NVFXTRANSPORT_MESSAGE_VARS;
 	NvAudioFxMixerHandle* phMixer;
+// 20110223, lake.kim@lge.com, media server restart 2
+	NvError* pReturnError;
+
 
 } NvFxTransportMessageMixerOpen;
 
@@ -113,7 +116,10 @@ typedef struct NvFxTransportMessageResultMixerOpenRec {
 	NVFXTRANSPORT_MESSAGE_RESULT_VARS;
 	NvAudioFxMixerHandle hMixer;
 	NvAudioFxMixerHandle* phMixer;
-
+// 20110223, lake.kim@lge.com, media server restart 2 [start]
+	NvError ReturnError;
+	NvError* pReturnError;
+// 20110223, lake.kim@lge.com, media server restart 2 [end]
 } NvFxTransportMessageResultMixerOpen;
 
 

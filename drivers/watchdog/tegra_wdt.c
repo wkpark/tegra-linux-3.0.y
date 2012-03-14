@@ -35,6 +35,24 @@
 #include <linux/uaccess.h>
 #include <linux/watchdog.h>
 
+
+#ifdef CONFIG_MACH_STAR
+/*DEBUG*/
+#define WDT_DEBUG
+#ifdef WDT_DEBUG
+#define ENABLE_WDT_DEBUG_MSG   0x01
+#define ENABLE_WDT_DEBUG_USR   0x02
+static int wdt_debug_enable_flag = 0x01;
+#define WDT_LOG(format, args...) if (wdt_debug_enable_flag & ENABLE_WDT_DEBUG_MSG) { \
+                                    printk("[WDT]: %s: " format "\n" , __FUNCTION__, ## args); \
+                                 }
+#else
+#define WDT_LOG(x...) do { } while(0)
+#endif
+#else
+#define WDT_LOG(x...) do { } while(0)
+#endif
+
 /* minimum and maximum watchdog trigger periods, in seconds */
 #define MIN_WDT_PERIOD	5
 #define MAX_WDT_PERIOD	1000
@@ -65,12 +83,12 @@ struct tegra_wdt {
 	bool			enabled;
 };
 
-static struct tegra_wdt *tegra_wdt_dev;
+static struct platform_device *tegra_wdt_dev;
 
 static void tegra_wdt_set_timeout(struct tegra_wdt *wdt, int sec)
 {
 	u32 ptv, src;
-
+    WDT_LOG();
 	ptv = readl(wdt->wdt_timer + TIMER_PTV);
 	src = readl(wdt->wdt_source);
 
@@ -91,7 +109,7 @@ static void tegra_wdt_set_timeout(struct tegra_wdt *wdt, int sec)
 static void tegra_wdt_enable(struct tegra_wdt *wdt)
 {
 	u32 val;
-
+    WDT_LOG();
 	val = wdt->timeout * 1000000ul / 2;
 	val |= (TIMER_EN | TIMER_PERIODIC);
 	writel(val, wdt->wdt_timer + TIMER_PTV);
@@ -102,6 +120,7 @@ static void tegra_wdt_enable(struct tegra_wdt *wdt)
 
 static void tegra_wdt_disable(struct tegra_wdt *wdt)
 {
+    WDT_LOG();
 	writel(0, wdt->wdt_source);
 	writel(0, wdt->wdt_timer + TIMER_PTV);
 }
@@ -109,7 +128,7 @@ static void tegra_wdt_disable(struct tegra_wdt *wdt)
 static irqreturn_t tegra_wdt_interrupt(int irq, void *dev_id)
 {
 	struct tegra_wdt *wdt = dev_id;
-
+    WDT_LOG();
 	writel(TIMER_PCR_INTR, wdt->wdt_timer + TIMER_PCR);
 	return IRQ_HANDLED;
 }
@@ -118,7 +137,7 @@ static int tegra_wdt_notify(struct notifier_block *this,
 			    unsigned long code, void *dev)
 {
 	struct tegra_wdt *wdt = container_of(this, struct tegra_wdt, notifier);
-
+    WDT_LOG();
 	if (code == SYS_DOWN || code == SYS_HALT)
 		tegra_wdt_disable(wdt);
 	return NOTIFY_DONE;
@@ -126,9 +145,8 @@ static int tegra_wdt_notify(struct notifier_block *this,
 
 static int tegra_wdt_open(struct inode *inode, struct file *file)
 {
-	struct miscdevice *miscdev = file->private_data;
-	struct tegra_wdt *wdt = dev_get_drvdata(miscdev->parent);
-
+    struct tegra_wdt *wdt = platform_get_drvdata(tegra_wdt_dev);
+    WDT_LOG();
 	if (test_and_set_bit(1, &wdt->users))
 		return -EBUSY;
 
@@ -142,7 +160,7 @@ static int tegra_wdt_open(struct inode *inode, struct file *file)
 static int tegra_wdt_release(struct inode *inode, struct file *file)
 {
 	struct tegra_wdt *wdt = file->private_data;
-
+    WDT_LOG();
 #ifndef CONFIG_WATCHDOG_NOWAYOUT
 	tegra_wdt_disable(wdt);
 	wdt->enabled = false;
@@ -165,16 +183,20 @@ static long tegra_wdt_ioctl(struct file *file, unsigned int cmd,
 
 	switch (cmd) {
 	case WDIOC_GETSUPPORT:
+        WDT_LOG("WDIOC_GETSUPPORT");
 		return copy_to_user((struct watchdog_info __user *)arg, &ident,
 				    sizeof(ident));
 	case WDIOC_GETSTATUS:
 	case WDIOC_GETBOOTSTATUS:
+        WDT_LOG("WDIOC_GETBOOTSTATUS");
 		return put_user(0, (int __user *)arg);
 
 	case WDIOC_KEEPALIVE:
+        WDT_LOG("WDIOC_KEEPALIVE");
 		return 0;
 
 	case WDIOC_SETTIMEOUT:
+        WDT_LOG("WDIOC_SETTIMEOUT");
 		if (get_user(new_timeout, (int __user *)arg))
 			return -EFAULT;
 		spin_lock(&lock);
@@ -183,6 +205,7 @@ static long tegra_wdt_ioctl(struct file *file, unsigned int cmd,
 		tegra_wdt_enable(wdt);
 		spin_unlock(&lock);
 	case WDIOC_GETTIMEOUT:
+        WDT_LOG("WDIOC_GETTIMEOUT");
 		return put_user(wdt->timeout, (int __user *)arg);
 	default:
 		return -ENOTTY;
@@ -192,6 +215,7 @@ static long tegra_wdt_ioctl(struct file *file, unsigned int cmd,
 static ssize_t tegra_wdt_write(struct file *file, const char __user *data,
 			       size_t len, loff_t *ppos)
 {
+    WDT_LOG();
 	return len;
 }
 
@@ -209,7 +233,7 @@ static int tegra_wdt_probe(struct platform_device *pdev)
 	struct resource *res_src, *res_wdt, *res_irq;
 	struct tegra_wdt *wdt;
 	int ret = 0;
-
+    WDT_LOG();
 	if (pdev->id != -1) {
 		dev_err(&pdev->dev, "only id -1 supported\n");
 		return -ENODEV;
@@ -291,7 +315,7 @@ static int tegra_wdt_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, wdt);
-	tegra_wdt_dev = wdt;
+	tegra_wdt_dev = pdev;
 	return 0;
 fail:
 	if (wdt->irq != -1)
@@ -311,7 +335,7 @@ fail:
 static int tegra_wdt_remove(struct platform_device *pdev)
 {
 	struct tegra_wdt *wdt = platform_get_drvdata(pdev);
-
+    WDT_LOG();
 	tegra_wdt_disable(wdt);
 
 	unregister_reboot_notifier(&wdt->notifier);
@@ -322,14 +346,14 @@ static int tegra_wdt_remove(struct platform_device *pdev)
 	release_mem_region(wdt->res_src->start, resource_size(wdt->res_src));
 	release_mem_region(wdt->res_wdt->start, resource_size(wdt->res_wdt));
 	kfree(wdt);
-	tegra_wdt_dev = NULL;
+	platform_set_drvdata(pdev, NULL);
 	return 0;
 }
 
 static int tegra_wdt_suspend(struct platform_device *pdev, pm_message_t state)
 {
 	struct tegra_wdt *wdt = platform_get_drvdata(pdev);
-
+    WDT_LOG();
 	tegra_wdt_disable(wdt);
 	return 0;
 }
@@ -337,7 +361,7 @@ static int tegra_wdt_suspend(struct platform_device *pdev, pm_message_t state)
 static int tegra_wdt_resume(struct platform_device *pdev)
 {
 	struct tegra_wdt *wdt = platform_get_drvdata(pdev);
-
+    WDT_LOG();
 	if (wdt->enabled)
 		tegra_wdt_enable(wdt);
 
@@ -357,11 +381,13 @@ static struct platform_driver tegra_wdt_driver = {
 
 static int __init tegra_wdt_init(void)
 {
+    WDT_LOG();
 	return platform_driver_register(&tegra_wdt_driver);
 }
 
 static void __exit tegra_wdt_exit(void)
 {
+    WDT_LOG();
 	platform_driver_unregister(&tegra_wdt_driver);
 }
 

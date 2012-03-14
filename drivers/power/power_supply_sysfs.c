@@ -52,7 +52,7 @@ static ssize_t power_supply_show_property(struct device *dev,
 		"Unknown", "N/A", "Trickle", "Fast"
 	};
 	static char *health_text[] = {
-		"Unknown", "Good", "Overheat", "Dead", "Over voltage",
+		"Unknown", "Good", "Overheat", "Critical Overheat", "Dead", "Over voltage",
 		"Unspecified failure", "Cold",
 	};
 	static char *technology_text[] = {

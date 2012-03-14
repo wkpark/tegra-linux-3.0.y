@@ -32,12 +32,27 @@
 
 #include "board.h"
 
+//20110131, byoungwoo.yoon@lge.com, Stop i2c comm during reset [START]
+#include "odm_kit/star/adaptations/pmu/max8907/max8907_supply_info_table.h"
+#include "nvrm_pmu.h"
+#include "nvodm_services.h"
+//20110131, byoungwoo.yoon@lge.com, Stop i2c comm during reset [END]
+
 #define APB_MISC_HIDREV		0x804
 #define FUSE_VISIBILITY_REG_OFFSET		0x48
 #define FUSE_VISIBILITY_BIT_POS		28
 #define FUSE_SPARE_BIT_18_REG_OFFSET		0x248
 #define FUSE_SPARE_BIT_19_REG_OFFSET		0x24c
 
+#if defined (CONFIG_MACH_STAR)
+extern void star_restore_loglevel();
+extern void star_set_verbose_loglevel();
+extern int is_star_suspend_debug();
+extern void write_cmd_reserved_buffer(unsigned char *buf, size_t len);
+extern void read_cmd_reserved_buffer(unsigned char * buf,size_t len);
+#endif
+//20110131, byoungwoo.yoon@lge.com, Stop i2c comm during reset
+extern void NvRmPrivDvsStop(void);
 
 bool tegra_chip_compare(u32 chip, u32 major_rev, u32 minor_rev)
 {
@@ -81,9 +96,181 @@ int dma_needs_bounce(struct device *dev, dma_addr_t addr, size_t size)
 }
 #endif
 
+#ifdef CONFIG_MACH_STAR
+
+#define TEGRA_TMR1_BASE			0x60005000
+#define TEGRA_CLK_RESET_BASE		0x60006000
+
+#define WDT_TIMEOUT 100
+
+#define CLK_RST_CONTROLLER_RST_SOURCE_0 0
+#define TIMER_TMR_PTV_0  0
+
+
+#define WDT_SOURCE CLK_RST_CONTROLLER_RST_SOURCE_0
+#define WDT_TIMER  TIMER_TMR_PTV_0
+
+
+#define TIMER_PTV 0x00
+#define TIMER_EN	(1 << 31)
+#define TIMER_PERIODIC	(1 << 30)
+#define TIMER_PCR       0x4
+#define TIMER_PCR_INTR (1 << 30)
+
+#define WDT_EN		(1 << 5)
+#define WDT_SEL_TMR1	(0 << 4)
+#define WDT_SYS_RST	(1 << 2)
+#define WDT_COP_RST ( 1 << 1)
+#define WDT_CPU_RST (1 << 0)
+
+	void __iomem *rst_reg_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
+
+#define rst_writel(value, reg) \
+	__raw_writel(value, (u32)rst_reg_base + (reg))
+#define rst_readl(reg) \
+	__raw_readl((u32)rst_reg_base + (reg))
+
+	void __iomem *tmr_reg_base = IO_ADDRESS(TEGRA_TMR1_BASE);
+
+#define tmr_writel(value, reg) \
+	__raw_writel(value, (u32)tmr_reg_base + (reg))
+#define tmr_readl(reg) \
+	__raw_readl((u32)tmr_reg_base + (reg))
+
+
+int star_watchdog_enabled = 0;
+void star_watchdog_disable();
+void star_emergency_restart(const char *domain, int timeout)
+{
+
+	u32 ptv,src;
+	u32 val;
+	NvU8 rst_en_bit = WDT_SYS_RST;
+    unsigned char tmpbuf[32] = { NULL, };
+
+    if (star_watchdog_enabled)
+    {
+       printk("watchdog is already enabled. so disable first\n");
+	   star_watchdog_disable();
+    }
+
+	star_watchdog_enabled = 1;
+	   
+	if (/*is_star_suspend_debug()*/1)
+	    star_set_verbose_loglevel();
+
+    if (domain)
+		switch (domain[0])
+		{
+		  case 'C': 
+		  case 'c':
+		  	printk("%s : cpu reset : timeout = %d sec\n",__func__, timeout);
+		  	rst_en_bit = WDT_CPU_RST;
+			break;
+		  case 'A':
+		  case 'a':
+		  	printk("%s : avp reset : timeout = %d sec\n",__func__, timeout);
+		  	rst_en_bit = WDT_COP_RST;
+			break;
+		  case 's':	
+		  case 'S':
+	   	    printk("%s : sys reset : timeout = %d sec\n",__func__, timeout);
+		  	rst_en_bit = WDT_SYS_RST;
+			break;
+		  default:
+		  	printk("%s : sys reset : timeout = %d sec\n",__func__, timeout);
+			rst_en_bit = WDT_SYS_RST;
+			break; 	
+		}	
+	
+	ptv = tmr_readl(TIMER_PTV);
+	src = rst_readl(WDT_SOURCE);
+
+	rst_writel(0, WDT_SOURCE);
+
+	if (ptv & TIMER_EN) {
+		printk("%s :PVT is valid\n",__func__);
+		ptv = timeout * 1000000ul;
+		ptv |= (TIMER_EN | TIMER_PERIODIC);
+		tmr_writel(ptv, TIMER_PTV);
+	}
+	rst_writel(src, WDT_SOURCE);
+
+	val = timeout* 1000000ul;
+	val |= (TIMER_EN | TIMER_PERIODIC);
+	tmr_writel(val, TIMER_PTV);
+
+	val = WDT_EN | WDT_SEL_TMR1 | rst_en_bit;
+	rst_writel(val, WDT_SOURCE);
+
+    tmpbuf[0] = 'w';
+	tmpbuf[1] = 'a';
+	write_cmd_reserved_buffer(tmpbuf, 3);
+
+}
+
+EXPORT_SYMBOL_GPL(star_emergency_restart);
+
+
+void star_watchdog_kick()
+{
+    printk("star_watchdog_kick\n");
+    tmr_writel(TIMER_PCR_INTR,TIMER_PCR);
+}
+
+EXPORT_SYMBOL_GPL(star_watchdog_kick);
+
+void star_watchdog_disable()
+{
+  unsigned char tmpbuf[32] = { NULL, };
+  printk("star_watchdog_disable \n");
+
+  rst_writel(0,WDT_SOURCE);
+  tmr_writel(0,TIMER_PTV);
+  star_watchdog_enabled = 0;
+  if (/*is_star_suspend_debug()*/1)
+      star_restore_loglevel();
+
+  tmpbuf[0] = '0';
+  write_cmd_reserved_buffer(tmpbuf, 3);
+}
+
+EXPORT_SYMBOL_GPL(star_watchdog_disable);
+
+#endif
+
+extern int pwky_shutdown;
 static void tegra_machine_restart(char mode, const char *cmd)
 {
+   
+#if (CONFIG_MACH_STAR)
+	//20110131, byoungwoo.yoon@lge.com, Stop i2c comm during reset
+	NvOdmServicesPmuHandle h_pmu = NvOdmServicesPmuOpen();
+
+	star_emergency_restart("sys",20);
+	printk("tegra_machine_restart\n");
+
+	NvRmPrivDvsStop();
+
+	if (h_pmu)
+	{ 
+		NvOdmServicesPmuSetVoltage( h_pmu, Max8907PmuSupply_Stop_i2c_Flag, 1UL, NULL );
+	}
+	else
+	{
+		printk("sensor pmu handle fail!\n");
+	}
+	//20110131, byoungwoo.yoon@lge.com, Stop i2c comm during reset [START]
+   
+	if ( cmd == NULL ) 
+		disable_nonboot_cpus();
+	else if ( *cmd != 'p'  )
+		disable_nonboot_cpus();
+
+#else
 	disable_nonboot_cpus();
+#endif
+		
 	flush_cache_all();
 	outer_disable();
 	arm_machine_restart(mode, cmd);

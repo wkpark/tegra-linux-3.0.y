@@ -442,7 +442,9 @@ struct input_keymap_entry {
 #define KEY_RFKILL		247	/* Key that controls all radios */
 
 /* Code 255 is reserved for special needs of AT keyboard driver */
-
+#if defined(CONFIG_MACH_STAR)
+#define KEY_HOOK 247
+#endif
 #define BTN_MISC		0x100
 #define BTN_0			0x100
 #define BTN_1			0x101
@@ -717,6 +719,15 @@ struct input_keymap_entry {
 #define BTN_TRIGGER_HAPPY38		0x2e5
 #define BTN_TRIGGER_HAPPY39		0x2e6
 #define BTN_TRIGGER_HAPPY40		0x2e7
+
+
+//20100714 joseph.jung@lge.com for Touch Button event cancel [START]
+#define KEY_REJECT			0x210
+//20100714 joseph.jung@lge.com for Touch Button event cancel [END]
+
+//2010.10.09 for pattern unlock. taesub.kim@lge.com [START_LGE]
+#define KEY_TESTMODE_UNLOCK	0x211
+//2010.10.09 for pattern unlock. taesub.kim@lge.com [END_LGE]
 
 /* We avoid low common keys in module aliases so they don't get huge. */
 #define KEY_MIN_INTERESTING	KEY_MUTE

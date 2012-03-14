@@ -54,11 +54,13 @@ bool tegra_is_ap20_a03p(void);
 
 extern struct sys_timer tegra_timer;
 
-#ifdef CONFIG_MACH_VENTANA
-extern int __init ventana_setup_wifi(void);
-int ventana_wifi_status_register(void (*callback)(int card_present,
+// 20110727, cs77.ha@lge.com, remove unused module
+#ifndef CONFIG_MACH_STAR
+#ifdef CONFIG_MACH_TEGRA_GENERIC
+extern int __init board_setup_wifi(void);
+int board_wifi_status_register(void (*callback)(int card_present,
 	void  *dev_id), void *dev_id);
 #endif
-
+#endif
 
 #endif

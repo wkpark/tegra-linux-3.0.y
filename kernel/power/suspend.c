@@ -27,6 +27,10 @@
 
 #include "power.h"
 
+#if defined (CONFIG_MACH_STAR)
+#include <mach/board-star-debug.h>
+#endif
+
 const char *const pm_states[PM_SUSPEND_MAX] = {
 #ifdef CONFIG_EARLYSUSPEND
 	[PM_SUSPEND_ON]		= "on",
@@ -37,6 +41,7 @@ const char *const pm_states[PM_SUSPEND_MAX] = {
 
 static const struct platform_suspend_ops *suspend_ops;
 
+extern void star_emergency_restart(const char *domain, int timeout);
 /**
  *	suspend_set_ops - Set the global suspend method table.
  *	@ops:	Pointer to ops structure.
@@ -275,6 +280,11 @@ int enter_state(suspend_state_t state)
 
 	if (!mutex_trylock(&pm_mutex))
 		return -EBUSY;
+      if (/*is_star_suspend_debug()*/1)
+      {
+	  SUSPEND_LOG ("[SUSPEND] star_emergency_restart() called at enter_state() \n");
+        star_emergency_restart("sys", 35);
+      }
 
 	printk(KERN_INFO "PM: Syncing filesystems ... ");
 	sys_sync();

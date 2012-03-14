@@ -32,6 +32,10 @@
 #include "../base.h"
 #include "power.h"
 
+#if defined (CONFIG_MACH_STAR)
+#include <mach/board-star-debug.h>
+#endif
+
 /*
  * The entries in the dpm_list list are in a depth first order, simply
  * because children are guaranteed to be discovered after parents, and
@@ -231,12 +235,14 @@ static int pm_op(struct device *dev,
 #ifdef CONFIG_SUSPEND
 	case PM_EVENT_SUSPEND:
 		if (ops->suspend) {
+            SUSPEND_LOG("[SUSPEND] : pm_op = %s\n", kobject_name(&dev->kobj));
 			error = ops->suspend(dev);
 			suspend_report_result(ops->suspend, error);
 		}
 		break;
 	case PM_EVENT_RESUME:
 		if (ops->resume) {
+            SUSPEND_LOG("[RESUME] : pm_op = %s\n", kobject_name(&dev->kobj));
 			error = ops->resume(dev);
 			suspend_report_result(ops->resume, error);
 		}
