@@ -1952,7 +1952,7 @@ dhd_open(struct net_device *net)
 	if (ifidx == DHD_BAD_IF)
 		return -1;
 
-	if ((dhd->iflist[ifidx]) && (dhd->iflist[ifidx]->state == WLC_E_IF_DEL)) {
+	if (ifidx > -1 && (dhd->iflist[ifidx]) && (dhd->iflist[ifidx]->state == WLC_E_IF_DEL)) {
 		DHD_ERROR(("%s: Error: called when IF already deleted\n", __FUNCTION__));
 		return -1;
 	}
