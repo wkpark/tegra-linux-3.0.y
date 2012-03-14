@@ -311,7 +311,7 @@ static void tegra_spi_workerthread(struct work_struct *w)
 	SPI_DEBUG_PRINT("tegra_spi_transfer end\n");
 }
 
-static int __init tegra_spi_probe(struct platform_device *pdev)
+static int __devinit tegra_spi_probe(struct platform_device *pdev)
 {
 	struct spi_master *master;
 	struct tegra_spi *spi;
@@ -402,7 +402,7 @@ spi_open_failed:
 	return status;
 }
 	
-static int tegra_spi_remove(struct platform_device *pdev)
+static int __devexit tegra_spi_remove(struct platform_device *pdev)
 {
 	struct spi_master *master;
 	struct tegra_spi *spi;
@@ -425,7 +425,7 @@ static int tegra_spi_remove(struct platform_device *pdev)
 
 static struct platform_driver tegra_spi_driver = {
 	.probe = tegra_spi_probe,
-	.remove = tegra_spi_remove,
+	.remove = __devexit_p(tegra_spi_remove),
 	.driver	= {
 		.name	= "tegra_spi",
 		.owner	= THIS_MODULE,

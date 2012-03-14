@@ -1353,7 +1353,7 @@ static void muic_interrupt_handler(void* arg)
     NvOdmGpioInterruptDone(s_hMuicHandle->hGpioInterrupt);
 }
 
-static int __init muic_probe(struct platform_device *pdev)
+static int __devinit muic_probe(struct platform_device *pdev)
 {
     int i, j, retry_no;
 #ifdef _MUIC_GPIO_I2C_

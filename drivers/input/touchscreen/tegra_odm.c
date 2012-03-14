@@ -312,7 +312,7 @@ static int tegra_touch_thread(void *pdata)
 	return 0;
 }
 
-static int __init tegra_touch_probe(struct platform_device *pdev)
+static int __devinit aegra_touch_probe(struct platform_device *pdev)
 {
 	struct tegra_touch_driver_data *touch = NULL;
 	struct input_dev *input_dev = NULL;

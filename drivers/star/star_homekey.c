@@ -127,7 +127,7 @@ static void homekey_interrupt_handler(void* arg)
     wake_lock_timeout(&s_homekey.wlock, msecs_to_jiffies(50));
 }
 
-static int __init homekey_probe(struct platform_device *pdev)
+static int __devinit homekey_probe(struct platform_device *pdev)
 {
     int ret;
     NvU32 pin, port;
@@ -216,7 +216,7 @@ err_probe_fail:
     return -ENOSYS;
 }
 
-static int homekey_remove(struct platform_device *pdev)
+static int __devexit homekey_remove(struct platform_device *pdev)
 {
     input_unregister_device(s_homekey.inputDev);
     input_free_device(s_homekey.inputDev);  
@@ -280,7 +280,7 @@ int homekey_resume(struct platform_device *dev)
 
 static struct platform_driver homekey_driver = {
     .probe      = homekey_probe,
-    .remove     = homekey_remove,
+    .remove     = __devexit_p(homekey_remove),
     .suspend    = homekey_suspend,
     .resume     = homekey_resume,
     .driver = {

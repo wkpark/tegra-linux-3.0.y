@@ -157,7 +157,7 @@ static struct sdhci_ops tegra_sdhci_ops = {
 	.set_clock		= tegra_sdhci_set_clock,
 };
 
-int __init tegra_sdhci_probe(struct platform_device *pdev)
+int __devinit tegra_sdhci_probe(struct platform_device *pdev)
 {
 	struct sdhci_host *sdhost;
 	struct tegra_sdhci *host;

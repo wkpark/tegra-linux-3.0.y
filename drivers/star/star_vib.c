@@ -348,7 +348,7 @@ static const struct attribute_group star_vib_group = {
 	.attrs = star_vib_attributes,
 };
 
-static int __init star_vib_probe(struct platform_device *pdev )
+static int __devinit star_vib_probe(struct platform_device *pdev )
 {
 	const NvOdmPeripheralConnectivity *pcon;
 	int err;

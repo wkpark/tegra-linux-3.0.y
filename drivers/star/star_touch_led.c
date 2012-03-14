@@ -194,7 +194,7 @@ void keep_touch_led_on()
 
 EXPORT_SYMBOL(keep_touch_led_on);
 
-static int __init touchLED_probe(struct platform_device *pdev)
+static int __devinit touchLED_probe(struct platform_device *pdev)
 {
     s_touchLED.conn = NvOdmPeripheralGetGuid( NV_ODM_GUID('t','o','u','c','h','L','E','D') );
 

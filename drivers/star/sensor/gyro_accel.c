@@ -2111,7 +2111,7 @@ static void gyro_late_resume(struct early_suspend *es)
 /*---------------------------------------------------------------------------
   platform device
   ---------------------------------------------------------------------------*/
-static int __init star_motion_probe(struct platform_device *pdev)
+static int __devinit star_motion_probe(struct platform_device *pdev)
 {
 	int err = 0;
 	unsigned char value = 0;
@@ -2498,7 +2498,7 @@ int lge_sensor_reset_gyro(void)
 	return SENSOR_OK;
 }
 
-static int star_motion_remove(struct platform_device *pdev)
+static int __devexit star_motion_remove(struct platform_device *pdev)
 {
 	//struct device *dev = &pdev->dev;
 	input_unregister_device(star_motion_dev->input_dev);
@@ -2608,7 +2608,7 @@ static NvS32 star_motion_suspend(struct platform_device *pdev)
 #endif
 static struct platform_driver star_motion_driver = {
 	.probe    	= star_motion_probe,
-	.remove   	= star_motion_remove,
+	.remove   	= __devexit_p(star_motion_remove),
 #ifndef CONFIG_HAS_EARLYSUSPEND
 	.suspend  	= star_motion_suspend,
 	.resume   	= star_motion_resume,

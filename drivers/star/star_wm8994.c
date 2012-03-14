@@ -223,7 +223,7 @@ void star_headsetdet_bias(int bias)
 /**
  * All the device spefic initializations happen here. 
  */
-static NvS32 __init wm8994_probe(struct platform_device *pdev)
+static NvS32 __devinit wm8994_probe(struct platform_device *pdev)
 {
 
 	NvS32 err = 0;

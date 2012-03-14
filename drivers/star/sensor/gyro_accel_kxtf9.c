@@ -1106,7 +1106,7 @@ RELEASE_INT:
 
 }
 
-static int __init star_accel_probe( struct platform_device *pdev )
+static int __devinit star_accel_probe( struct platform_device *pdev )
 {
 	NvU32 I2cInstance = 0;
 	const NvOdmPeripheralConnectivity *pcon;

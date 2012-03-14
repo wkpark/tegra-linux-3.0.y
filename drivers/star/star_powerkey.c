@@ -441,7 +441,7 @@ static int modem_resume(struct platform_device *pdev)
 //20100610, cs77.ha@lge.com, sleep status gpio for modem [END]
 #endif
 
-static int __init powerkey_probe(struct platform_device *pdev)
+static int __devinit powerkey_probe(struct platform_device *pdev)
 {
     int ret;
     NvU32 pin, port;

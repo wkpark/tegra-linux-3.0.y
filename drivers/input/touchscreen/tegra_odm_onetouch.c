@@ -247,7 +247,7 @@ static int tegra_onetouch_thread(void *pdata)
 }
 
 
-static int __init tegra_onetouch_probe(struct platform_device *pdev)
+static int __devinit tegra_onetouch_probe(struct platform_device *pdev)
 {
 	struct tegra_onetouch_driver_data *onetouch = NULL;
 	struct input_dev *input_dev = NULL;
@@ -371,7 +371,7 @@ err_mutex_create_failed:
 	return err;
 }
 
-static int tegra_onetouch_remove(struct platform_device *pdev)
+static int __devexit tegra_onetouch_remove(struct platform_device *pdev)
 {
 	struct tegra_onetouch_driver_data *onetouch = platform_get_drvdata(pdev);
 
@@ -424,7 +424,7 @@ static void tegra_onetouch_shutdown(struct  platform_device *pdev)
 
 static struct platform_driver tegra_onetouch_driver = {
 	.probe	  = tegra_onetouch_probe,
-	.remove	 = tegra_onetouch_remove,
+	.remove	  = __devexit_p(tegra_onetouch_remove),
 	.shutdown = tegra_onetouch_shutdown,
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	.suspend = NULL,

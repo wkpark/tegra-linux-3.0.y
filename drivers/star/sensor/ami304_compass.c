@@ -990,7 +990,7 @@ static struct miscdevice ami304hal_device = {
 /**
  * All the device spefic initializations happen here.
  */
-static NvS32 __init ami304_probe(struct platform_device *pdev)
+static NvS32 __devinit ami304_probe(struct platform_device *pdev)
 {
 
 	struct i2c_client *new_client = ami304_i2c_client;
