@@ -477,13 +477,13 @@ static void tegra_suspend_dram(bool lp0_ok)
 	tegra_setup_wakepads(lp0_ok);
 	suspend_cpu_complex();
 	flush_cache_all();
-	outer_shutdown();
+	outer_disable();
 
 	__cortex_a9_save(mode);
 	restore_cpu_complex(false);
 
 	writel(orig, evp_reset);
-	outer_restart();
+	outer_enable();
 	writel(on_timer, pmc + PMC_CPUPWRGOOD_TIMER);
 	writel(off_timer, pmc + PMC_CPUPWROFF_TIMER);
 

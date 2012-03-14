@@ -85,7 +85,7 @@ static void tegra_machine_restart(char mode, const char *cmd)
 {
 	disable_nonboot_cpus();
 	flush_cache_all();
-	outer_shutdown();
+	outer_disable();
 	arm_machine_restart(mode, cmd);
 }
 
