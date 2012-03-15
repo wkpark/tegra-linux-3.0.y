@@ -1,21 +1,57 @@
 # bcm4329
+#	-Dlinux -DDHD_SDALIGN=64 -DMAX_HDR_READ=64
+#	-DDHD_FIRSTREAD=64
+#	-DSET_RANDOM_MAC_SOFTAP -DCSCAN -DHW_OOB
+#	-DKEEP_ALIVE -DPNO_SUPPORT
+#	-DOOB_INTR_ONLY -DCUSTOMER_HW2
+
+SRCROOT = drivers/net/wireless/bcm4329
+
 DHDCFLAGS = -DLINUX -DBCMDRIVER -DBCMDONGLEHOST -DDHDTHREAD -DBCMWPA2         \
-	-DUNRELEASEDCHIP -Dlinux -DDHD_SDALIGN=64 -DMAX_HDR_READ=64           \
-	-DDHD_FIRSTREAD=64 -DDHD_GPL -DDHD_SCHED -DBDC -DTOE -DDHD_BCMEVENTS  \
+	-DUNRELEASEDCHIP -Dlinux \
+	-DDHD_SCHED -DBDC -DTOE -DDHD_BCMEVENTS \
 	-DSHOW_EVENTS -DBCMSDIO -DDHD_GPL -DBCMLXSDMMC -DBCMPLATFORM_BUS      \
-	-Wall -Wstrict-prototypes -Werror -DOOB_INTR_ONLY -DCUSTOMER_HW2      \
-	-DDHD_USE_STATIC_BUF -DMMC_SDIO_ABORT -DDHD_DEBUG_TRAP -DSOFTAP       \
-	-DEMBEDDED_PLATFORM -DARP_OFFLOAD_SUPPORT -DPKT_FILTER_SUPPORT        \
-	-DGET_CUSTOM_MAC_ENABLE -DSET_RANDOM_MAC_SOFTAP -DCSCAN -DHW_OOB      \
-	-DKEEP_ALIVE -DPNO_SUPPORT                                            \
-	-Idrivers/net/wireless/bcm4329 -Idrivers/net/wireless/bcm4329/include
+	-Wall -Wstrict-prototypes -Werror \
+	-DMMC_SDIO_ABORT \
+	-DSDIO_ISR_THREAD \
+	-DEMBEDDED_PLATFORM \
+	-DGET_CUSTOM_MAC_ENABLE -DSET_RANDOM_MAC_SOFTAP \
+	-I$(SRCROOT) -I$(SRCROOT)/include \
+	\
+	-DIOCTL_RESP_TIMEOUT=2000 \
+	-DSDIO_VENDOR_ID_BROADCOM=0x2d0 \
+	-DSDIO_DEVICE_ID_BROADCOM_4325=0x4c6 \
+	-DSDIO_DEVICE_ID_BROADCOM_4329=0x4329 \
+	-DANDROID_SPECIFIC \
+	-DOEM_ANDROID \
+	-DCONFIG_FIRST_SCAN
 
 DHDOFILES = dhd_linux.o linux_osl.o bcmutils.o dhd_common.o dhd_custom_gpio.o \
 	wl_iw.o siutils.o sbutils.o aiutils.o hndpmu.o bcmwifi.o dhd_sdio.o   \
 	dhd_linux_sched.o dhd_cdc.o bcmsdh_sdmmc.o bcmsdh.o bcmsdh_linux.o    \
 	bcmsdh_sdmmc_linux.o
 
+obj-$(CONFIG_BRCM_USE_STATIC_BUF) += brcm_static_buf.o
+
 obj-$(CONFIG_BCM4329) += wireless.o
 wireless-objs += $(DHDOFILES)
 EXTRA_CFLAGS = $(DHDCFLAGS)
 EXTRA_LDFLAGS += --strip-debug
+
+ifeq ($(CONFIG_BRCM_LGE_WL_PKTFILTER),y)
+EXTRA_CFLAGS += -DPKT_FILTER_SUPPORT
+endif
+ifeq ($(CONFIG_BRCM_LGE_WL_ARPOFFLOAD),y)
+EXTRA_CFLAGS += -DARP_OFFLOAD_SUPPORT
+endif
+ifeq ($(CONFIG_BRCM_USE_SOFTAP),y)
+EXTRA_CFLAGS += -DSOFTAP
+endif
+
+ifeq ($(CONFIG_BCM4329_DEBUG),y)
+EXTRA_CFLAGS += -DDHD_DEBUG -DSDTEST -DSRCBASE="\"$(SRCROOT)\""
+endif
+
+ifeq ($(CONFIG_BRCM_USE_STATIC_BUF),y)
+EXTRA_CFLAGS += -DDHD_USE_STATIC_BUF
+endif

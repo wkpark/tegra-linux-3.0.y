@@ -207,6 +207,7 @@ typedef BWL_PRE_PACKED_STRUCT struct bcm_event {
 
 #define WLC_E_RELOAD_STATUS1	1
 
+
 #include <packed_section_end.h>
 
 #endif 
