@@ -32,9 +32,13 @@
 #include <linux/version.h>
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
 #include <linux/config.h>
-#elif (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 33))
+#else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 33))
+#include <generated/autoconf.h>
+#else
 #include <linux/autoconf.h>
 #endif
+#endif 
 #include <linux/module.h>
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 3, 0))
@@ -66,7 +70,6 @@
 #include <linux/pci.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
-#include <linux/semaphore.h>
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 28))
 #undef IP_TOS
 #endif 
@@ -426,11 +429,70 @@ pci_restore_state(struct pci_dev *dev, u32 *buffer)
 #define CHECKSUM_HW	CHECKSUM_PARTIAL
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
+/* hyeok-debug -S */
+typedef struct {
+        void    *parent;
+        struct  task_struct *p_task;
+        long    thr_pid;
+        int     prio;
+        struct  semaphore sema;
+        bool    terminated;
+        struct  completion completed;
+} tsk_ctl_t;
+
+
+#ifdef DHD_DEBUG
+#define DBG_THR(x) printk x
+#else
+#define DBG_THR(x)
+#endif
+
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0))
+#define SMP_RD_BARRIER_DEPENDS(x) smp_read_barrier_depends(x)
+#else
+#define SMP_RD_BARRIER_DEPENDS(x) smp_rmb(x)
+#endif
+
+#define PROC_START(thread_func, owner, tsk_ctl, flags) \
+{ \
+        sema_init(&((tsk_ctl)->sema), 0); \
+        init_completion(&((tsk_ctl)->completed)); \
+        (tsk_ctl)->parent = owner; \
+        (tsk_ctl)->terminated = FALSE; \
+        (tsk_ctl)->thr_pid = kernel_thread(thread_func, tsk_ctl, flags); \
+        if ((tsk_ctl)->thr_pid > 0 ) \
+                wait_for_completion(&((tsk_ctl)->completed)); \
+        DBG_THR(("%s thr:%lx started\n", __FUNCTION__, (tsk_ctl)->thr_pid)); \
+}
+
+#define PROC_STOP(tsk_ctl) \
+{ \
+        (tsk_ctl)->terminated = TRUE; \
+        smp_wmb(); \
+        up(&((tsk_ctl)->sema)); \
+        wait_for_completion(&((tsk_ctl)->completed)); \
+        DBG_THR(("%s thr:%lx terminated OK\n", __FUNCTION__, (tsk_ctl)->thr_pid)); \
+        (tsk_ctl)->thr_pid = -1; \
+}
+/* hyeok-debug -E */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 31))
+#define KILL_PROC(nr, sig) \
+{ \
+struct task_struct *tsk; \
+struct pid *pid;    \
+pid = find_get_pid((pid_t)nr);    \
+tsk = pid_task(pid, PIDTYPE_PID);    \
+if (tsk) send_sig(sig, tsk, 1); \
+}
+#else
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && (LINUX_VERSION_CODE <= \
+	KERNEL_VERSION(2, 6, 30))
 #define KILL_PROC(pid, sig) \
 { \
 	struct task_struct *tsk; \
-	tsk = pid_task(find_vpid(pid), PIDTYPE_PID); \
+	tsk = find_task_by_vpid(pid); \
 	if (tsk) send_sig(sig, tsk, 1); \
 }
 #else
@@ -438,6 +500,7 @@ pci_restore_state(struct pci_dev *dev, u32 *buffer)
 { \
 	kill_proc(pid, sig, 1); \
 }
+#endif 
 #endif 
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0))
