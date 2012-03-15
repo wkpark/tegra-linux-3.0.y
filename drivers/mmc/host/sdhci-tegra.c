@@ -43,6 +43,13 @@
 //20110109, prevent a lot of reading and writing SD card firmware
 #define SDCARD_ALWAYS_ON	1
 
+// sunghoon.kim, 2010,11,05 , for remove CONFIG_BCM4329_GPIO_WL_RESET in defconfig [START]
+#ifdef  CONFIG_BCM4329_GPIO_WL_RESET
+#undef CONFIG_BCM4329_GPIO_WL_RESET
+#endif
+#define CONFIG_BCM4329_GPIO_WL_RESET 177
+// sunghoon.kim, 2010,11,05 , for remove CONFIG_BCM4329_GPIO_WL_RESET in defconfig [END]
+
 struct tegra_sdhci {
 	struct platform_device	*pdev;
 	struct clk		*clk;
@@ -85,7 +92,13 @@ static irqreturn_t card_detect_isr(int irq, void *dev_id)
 	host->card_present =
 		(gpio_get_value(host->gpio_cd) == host->gpio_polarity_cd);
 	smp_wmb();
+//20110124, jm1.lee@lge.com, change interrupt service routine from direct callback to scheduler [START]
+#if 0
 	sdhci_card_detect_callback(sdhost);
+#else
+	tasklet_schedule(&sdhost->card_tasklet);
+#endif
+//20110124, jm1.lee@lge.com, change interrupt service routine from direct callback to scheduler [END]
 
 	return IRQ_HANDLED;
 }
@@ -140,6 +153,29 @@ static void tegra_sdhci_set_clock(struct sdhci_host *sdhost,
 	}
 }
 
+// 20100513 mingi.sung@lge.com Implementing WLAN card detection procedure temporarily [START]
+#if defined (CONFIG_LGE_BCM432X_PATCH)
+struct sdhci_host	*g_sdhost;
+void do_wifi_cardetect(void *p)
+{
+	struct tegra_sdhci *t_sdhci = sdhci_priv(g_sdhost);
+
+	printk("[Wi-Fi] %s:%d\n",__func__,__LINE__);
+	
+	t_sdhci->card_present = gpio_get_value(CONFIG_BCM4329_GPIO_WL_RESET);
+
+	printk("[Wi-Fi] card_present value is %d\n", t_sdhci->card_present);
+#if 0
+		sdhci_card_detect_callback(g_sdhost);
+#else
+		tasklet_schedule(&g_sdhost->card_tasklet);
+#endif
+
+}
+EXPORT_SYMBOL(do_wifi_cardetect);
+#endif
+// 20100513 mingi.sung@lge.com Implementing WLAN card detection procedure temporarily [END]
+
 static struct sdhci_ops tegra_sdhci_wp_cd_ops = {
 	.enable_dma		= tegra_sdhci_enable_dma,
 	.get_ro			= tegra_sdhci_get_ro,
@@ -183,6 +219,14 @@ int __devinit tegra_sdhci_probe(struct platform_device *pdev)
 		return (!sdhost) ? -ENOMEM : PTR_ERR(sdhost);
 	}
 	sdhost->hw_name = dev_name(&pdev->dev);
+
+// 20100513 mingi.sung@lge.com Implementing WLAN card detection procedure temporarily [START]
+#if defined (CONFIG_LGE_BCM432X_PATCH)
+	if(pdev->id == 0) {
+		g_sdhost= sdhost;
+	}
+#endif
+// 20100513 mingi.sung@lge.com Implementing WLAN card detection procedure temporarily [END]
 
 	host = sdhci_priv(sdhost);
 
@@ -411,6 +455,33 @@ static int tegra_sdhci_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#if defined(CONFIG_BRCM_LGE_WL_HOSTWAKEUP)
+#include <linux/earlysuspend.h>
+struct early_suspend dhdpm;
+EXPORT_SYMBOL(dhdpm);
+
+void register_mmc_card_pm(struct early_suspend *cardpm)
+{
+	if((cardpm != NULL) && (cardpm->suspend !=NULL) && (cardpm->resume != NULL))
+	{
+		dhdpm.suspend = cardpm->suspend;
+		dhdpm.resume = cardpm->resume;
+		printk("[sdhci-tegra]%s:%d - dhdpm callback func register OK\n",__func__,__LINE__);
+	}
+	else
+		printk("[sdhci-tegra]%s:%d - dhdpm callback func register Fail\n",__func__,__LINE__);
+}
+EXPORT_SYMBOL(register_mmc_card_pm);
+
+void unregister_mmc_card_pm(void)
+{
+	printk("[sdhci-tegra]%s:%d - dhdpm callback func set NULL\n",__func__,__LINE__);
+	dhdpm.suspend = NULL;
+	dhdpm.resume  = NULL;	
+}
+EXPORT_SYMBOL(unregister_mmc_card_pm);
+#endif /* CONFIG_BRCM_LGE_WL_HOSTWAKEUP */
+
 #define is_card_sdio(_card) \
 ((_card) && ((_card)->type == MMC_TYPE_SDIO))
 
@@ -530,7 +601,6 @@ static int tegra_sdhci_suspend(struct device *dev)
 			/* reduce host controller clk and card clk to 100 KHz */
 			tegra_sdhci_set_clock(sdhost, clock);
 			sdhci_writew(sdhost, 0, SDHCI_CLOCK_CONTROL);
-
 			if (sdhost->max_clk > clock) {
 				div =  1 << (fls(sdhost->max_clk / clock) - 2);
 				if (div > 128)
@@ -541,6 +611,7 @@ static int tegra_sdhci_suspend(struct device *dev)
 			clk |= SDHCI_CLOCK_INT_EN | SDHCI_CLOCK_CARD_EN;
 			sdhci_writew(sdhost, clk, SDHCI_CLOCK_CONTROL);
 		} else if (is_card_sd(sdhost->mmc->card) && host->card_present) {
+			sdhci_cancel_delayed_work(sdhost, event);
 			if(host->clk_enable) {
 				clk_disable(host->clk);
 				host->clk_enable = false;
@@ -551,6 +622,15 @@ static int tegra_sdhci_suspend(struct device *dev)
 		int div = 0;
 		u16 clk;
 		unsigned int clock = 100000;
+
+#if defined(CONFIG_BRCM_LGE_WL_HOSTWAKEUP)
+			if(dhdpm.suspend != NULL) {
+				printk("[sdhci-tegra]%s:%d - call dhdpm.suspend\n",__func__,__LINE__);
+				dhdpm.suspend(NULL);
+			}
+			else
+				printk("[sdhci-tegra]%s:%d - dhdpm.suspend is NULL\n",__func__,__LINE__);
+#endif /* CONFIG_BRCM_LGE_WL_HOSTWAKEUP */
 
 		/* save interrupt status before suspending */
 		host->sdhci_ints = sdhci_readl(sdhost, SDHCI_INT_ENABLE);
@@ -590,6 +670,7 @@ static int tegra_sdhci_resume(struct device *dev)
 {
 	struct sdhci_host *sdhost = dev_to_host(dev);
 	struct tegra_sdhci *host = sdhci_priv(sdhost);
+	int ret_tegra_sdhci_resume;
 
 	if (!host->clk_enable) {
 		clk_enable(host->clk);
@@ -620,13 +701,26 @@ static int tegra_sdhci_resume(struct device *dev)
 
 		mmiowb();
 		sdhost->mmc->ops->set_ios(sdhost->mmc, &sdhost->mmc->ios);
+#if defined(CONFIG_BRCM_LGE_WL_HOSTWAKEUP)
+		if(is_card_sdio(sdhost->mmc->card)) {
+			if(dhdpm.resume != NULL) {
+				printk("[sdhci-tegra]%s:%d - call dhdpm.resume\n",__func__,__LINE__);
+				dhdpm.resume(NULL);
+			}
+			else
+				printk("[sdhci-tegra]%s:%d - dhdpm.resume is NULL\n",__func__,__LINE__);
+		}
+#endif /* CONFIG_BRCM_LGE_WL_HOSTWAKEUP */
 		return 0;
 	}
 
 	if (host->hOdmSdio)
 		NvOdmSdioResume(host->hOdmSdio);
 
-	return sdhci_resume_host(sdhost);
+	ret_tegra_sdhci_resume = sdhci_resume_host(sdhost);
+ 
+//	return sdhci_resume_host(sdhost);
+	return ret_tegra_sdhci_resume;
 }
 static struct dev_pm_ops tegra_sdhci_pm = {
 	.suspend = tegra_sdhci_suspend,
