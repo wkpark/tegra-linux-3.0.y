@@ -485,8 +485,6 @@ static void __init gannet_setup(struct net_device *dev)
 	dev->flags |= IFF_NOARP;
 
 	random_ether_addr(dev->dev_addr);
-
-	netif_start_queue(dev);
 }
 
 static int __init gannet_init(void)
