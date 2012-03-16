@@ -133,7 +133,7 @@ extern void read_cmd_reserved_buffer(unsigned char * buf,size_t len);
 void arm_machine_restart(char mode, const char *cmd)
 {
 #if defined (CONFIG_MACH_STAR)
-	unsigned char tmpbuf[3] = { NULL, };
+	unsigned char tmpbuf[4] = { NULL, };
         if (cmd)
         {
          strncpy(tmpbuf, cmd, 3);
