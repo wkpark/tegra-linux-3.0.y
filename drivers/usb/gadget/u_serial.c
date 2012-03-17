@@ -18,11 +18,13 @@
 /* #define VERBOSE_DEBUG */
 
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/interrupt.h>
 #include <linux/device.h>
 #include <linux/delay.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
+#include <linux/slab.h>
 
 #include "u_serial.h"
 
