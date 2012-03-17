@@ -317,6 +317,18 @@ static void __init register_spi_ipc_devices(void)
 }
 
 
+static void __init tegra_fixup(struct machine_desc *desc, struct tag *tags,
+				 char **cmdline, struct meminfo *mi)
+{
+	char *p;
+
+	p = *cmdline;
+	/* androidboot.serialno HACK to support androidboot.serialno */
+	if (strlen(p))
+		strlcat(p, " ", COMMAND_LINE_SIZE);
+	strlcat(p, "androidboot.serialno=0123456789ABCDEF", COMMAND_LINE_SIZE);
+}
+
 extern unsigned int system_serial_low;
 extern unsigned int system_serial_high;
 
@@ -324,6 +336,7 @@ static void __init do_system_init(bool standard_i2c, bool standard_spi)
 {
 	unsigned int chip_id[2];
 	char serial[17];
+	char *p;
 
 	tegra_common_init();
 	tegra_setup_nvodm(true, true);
@@ -336,6 +349,14 @@ static void __init do_system_init(bool standard_i2c, bool standard_spi)
 #endif
 	system_serial_low = chip_id[0];
 	system_serial_high = chip_id[1];
+
+	/* HACK append androidboot.serialno and update /proc/cmdline */
+	if ((p = strstr(saved_command_line, "=0123456789ABCDEF"))) {
+		p++;
+                strncpy(p, serial, 16);
+                printk(KERN_INFO "fixed cmdline=%s\n", saved_command_line);
+	}
+
 	platform_add_devices(platform_devices, ARRAY_SIZE(platform_devices));
 }
 
@@ -476,6 +497,7 @@ static void __init tegra_generic_init(void)
 
 MACHINE_START(VENTANA, "NVIDIA Ventana Development System")
 	.boot_params  = 0x00000100,
+	.fixup          = tegra_fixup,
 	.init_irq       = tegra_init_irq,
 	.init_early     = tegra_init_early,
 	.init_machine   = tegra_ventana_init,
@@ -485,6 +507,7 @@ MACHINE_END
 
 MACHINE_START(HARMONY, "NVIDIA Harmony Development System")
 	.boot_params  = 0x00000100,
+	.fixup          = tegra_fixup,
 	.init_irq       = tegra_init_irq,
 	.init_early     = tegra_init_early,
 	.init_machine   = tegra_harmony_init,
@@ -495,6 +518,7 @@ MACHINE_END
 
 MACHINE_START(TEGRA_GENERIC, "Tegra 2 Development System")
 	.boot_params  = 0x00000100,
+	.fixup          = tegra_fixup,
 	.init_irq       = tegra_init_irq,
 	.init_early     = tegra_init_early,
 	.init_machine   = tegra_generic_init,
