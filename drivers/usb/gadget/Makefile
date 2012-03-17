@@ -35,6 +35,26 @@ obj-$(CONFIG_USB_FUSB300)	+= fusb300_udc.o
 #
 # USB gadget drivers
 #
+# 20100825, jm1.lee@lge.com, for USB mode switching [START]
+ifeq ($(CONFIG_USB_ANDROID_CDC_ECM),y)
+F_ECM = f_ecm.o
+endif
+ifeq ($(CONFIG_USB_F_SERIAL),y)
+F_SERIAL = f_serial.o
+endif
+
+ifeq ($(CONFIG_USB_ANDROID_RMNET),y)
+F_RMNET = f_rmnet.o
+endif
+
+ifeq ($(CONFIG_USB_ANDROID_RNDIS),y)
+F_RNDIS = f_rndis.o
+endif
+
+ifeq ($(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET),y)
+ANDROID = android_lg.o
+endif
+# 20100825, jm1.lee@lge.com, for USB mode switching [END]
 g_zero-y			:= zero.o
 g_audio-y			:= audio.o
 g_ether-y			:= ether.o
@@ -45,6 +65,10 @@ g_file_storage-y		:= file_storage.o
 g_mass_storage-y		:= mass_storage.o
 g_printer-y			:= printer.o
 g_cdc-y				:= cdc2.o
+g_android-objs			:= $(ANDROID) f_adb.o f_mass_storage.o \
+					u_serial.o f_acm.o u_ether.o \
+					$(F_ECM) $(F_SERIAL) $(F_RMNET) $(F_RNDIS)
+
 g_multi-y			:= multi.o
 g_hid-y				:= hid.o
 g_dbgp-y			:= dbgp.o
@@ -63,6 +87,7 @@ obj-$(CONFIG_USB_G_SERIAL)	+= g_serial.o
 obj-$(CONFIG_USB_G_PRINTER)	+= g_printer.o
 obj-$(CONFIG_USB_MIDI_GADGET)	+= g_midi.o
 obj-$(CONFIG_USB_CDC_COMPOSITE) += g_cdc.o
+obj-$(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET) += g_android.o
 obj-$(CONFIG_USB_G_HID)		+= g_hid.o
 obj-$(CONFIG_USB_G_DBGP)	+= g_dbgp.o
 obj-$(CONFIG_USB_G_MULTI)	+= g_multi.o
@@ -70,9 +95,13 @@ obj-$(CONFIG_USB_G_NOKIA)	+= g_nokia.o
 obj-$(CONFIG_USB_G_WEBCAM)	+= g_webcam.o
 obj-$(CONFIG_USB_G_NCM)		+= g_ncm.o
 obj-$(CONFIG_USB_ANDROID)	+= android.o
-obj-$(CONFIG_USB_ANDROID_ACM)	+= f_acm.o u_serial.o
+obj-$(CONFIG_USB_ANDROID_ACM)	+= f_acm.o u_serial.o f_serial.o f_serial_gps.o
 obj-$(CONFIG_USB_ANDROID_ADB)	+= f_adb.o
+ifeq ($(CONFIG_USB_ANDROID),y)
 obj-$(CONFIG_USB_ANDROID_MASS_STORAGE)	+= f_mass_storage.o
+endif
 obj-$(CONFIG_USB_ANDROID_MTP)	+= f_mtp.o
+ifeq ($(CONFIG_USB_ANDROID),y)
 obj-$(CONFIG_USB_ANDROID_RNDIS)	+= f_rndis.o u_ether.o
+endif
 obj-$(CONFIG_USB_ANDROID_ACCESSORY)	+= f_accessory.o

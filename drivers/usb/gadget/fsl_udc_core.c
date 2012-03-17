@@ -2396,6 +2396,15 @@ int usb_gadget_probe_driver(struct usb_gadget_driver *driver,
 	udc_controller->gadget.dev.driver = &driver->driver;
 	spin_unlock_irqrestore(&udc_controller->lock, flags);
 
+//20100822, jm1.lee@lge.com, for USB mode switching [START]
+#if defined(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET)
+        retval = device_add(&udc_controller->gadget.dev);
+	if (retval < 0){
+            printk(KERN_ERR "%s : device_add fail!!\n", __func__);
+		goto out;
+       }
+#endif
+//20100822, jm1.lee@lge.com, for USB mode switching [END]
 	/* bind udc driver to gadget driver */
 	retval = bind(&udc_controller->gadget);
 	if (retval) {
@@ -2502,6 +2511,10 @@ int usb_gadget_unregister_driver(struct usb_gadget_driver *driver)
 	udc_controller->gadget.dev.driver = NULL;
 	udc_controller->driver = NULL;
 
+//20100822, jm1.lee@lge.com, for USB mode switching
+#if defined(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET)
+	device_del(&udc_controller->gadget.dev);
+#endif
 	printk(KERN_WARNING "unregistered gadget driver '%s'\n",
 	       driver->driver.name);
 	return 0;
@@ -3017,10 +3030,16 @@ static int __init fsl_udc_probe(struct platform_device *pdev)
 	dev_set_name(&udc_controller->gadget.dev, "gadget");
 	udc_controller->gadget.dev.release = fsl_udc_release;
 	udc_controller->gadget.dev.parent = &pdev->dev;
+//20100822, jm1.lee@lge.com, for USB mode switching [START]
+#if defined(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET)
+	device_initialize(&udc_controller->gadget.dev);
+#else
 	ret = device_register(&udc_controller->gadget.dev);
 	if (ret < 0)
 		goto err_free_irq;
 
+#endif
+//20100822, jm1.lee@lge.com, for USB mode switching [END]
 	if (udc_controller->transceiver)
 		udc_controller->gadget.is_otg = 1;
 
