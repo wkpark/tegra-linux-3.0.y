@@ -543,7 +543,7 @@ static void __init do_system_init(bool standard_i2c, bool standard_spi)
 
 	NvRmQueryChipUniqueId(s_hRmGlobal, sizeof(chip_id), (void*)chip_id);
 	snprintf(serial, sizeof(serial), "%08x%08x", chip_id[1], chip_id[0]);
-#ifdef CONFIG_USB_ANDROID
+#if defined(CONFIG_USB_ANDROID) || defined(CONFIG_USB_SUPPORT_LGE_ANDROID_GADGET)
 	tegra_android_platform.serial_number = kstrdup(serial, GFP_KERNEL);
 #endif
 	system_serial_low = chip_id[0];
