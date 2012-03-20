@@ -1351,13 +1351,13 @@ static struct uart_ops tegra_uart_ops = {
 	.release_port	= tegra_release_port,
 };
 
-static int __init tegra_uart_probe(struct platform_device *pdev);
+static int __devinit tegra_uart_probe(struct platform_device *pdev);
 static int __devexit tegra_uart_remove(struct platform_device *pdev);
 static int tegra_uart_suspend(struct platform_device *pdev, pm_message_t state);
 static int tegra_uart_resume(struct platform_device *pdev);
 
 static struct platform_driver tegra_uart_platform_driver = {
-	.remove		= tegra_uart_remove,
+	.remove		= __devexit_p(tegra_uart_remove),
 	.probe		= tegra_uart_probe,
 	.suspend	= tegra_uart_suspend,
 	.resume		= tegra_uart_resume,
@@ -1449,7 +1449,7 @@ static int __devexit tegra_uart_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static int __init tegra_uart_probe(struct platform_device *pdev)
+static int __devinit tegra_uart_probe(struct platform_device *pdev)
 {
 	struct tegra_uart_port *t;
 	struct tegra_serial_platform_data *pdata = pdev->dev.platform_data;

@@ -497,7 +497,7 @@ static const struct attribute_group star_proxi_group = {
     .attrs = star_proxi_attributes,
 };
 
-static int __init proximity_probe(struct platform_device *pdev)
+static int __devinit proximity_probe(struct platform_device *pdev)
 {
     int i, ret = 0;
     NvU32 I2cInstance = 0;
@@ -682,7 +682,7 @@ err_open_gpio_fail:
 #endif
 }
 
-static int proximity_remove(struct platform_device *pdev)
+static int __devexit proximity_remove(struct platform_device *pdev)
 {
     struct device *dev = &pdev->dev;
     star_proxi_disable(&s_proximity);
@@ -739,7 +739,7 @@ static int proximity_resume(struct platform_device *pdev)
 
 static struct platform_driver star_proximity_driver = {
         .probe   = proximity_probe,
-        .remove  = proximity_remove,
+        .remove  = __devexit_p(proximity_remove),
         //.suspend = proximity_suspend,
         //.resume = proximity_resume,
         .driver  = {

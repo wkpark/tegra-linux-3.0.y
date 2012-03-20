@@ -1007,7 +1007,7 @@ DoneWithSample:
 #endif /* FEATURE_LGE_TOUCH_CUSTOMIZE */
 // 20100402  LGE Touch thread Customization [END]
 
-static int __init tegra_touch_probe(struct platform_device *pdev)
+static int __devinit tegra_touch_probe(struct platform_device *pdev)
 {
 	struct tegra_touch_driver_data *touch = NULL;
 	struct input_dev *input_dev = NULL;

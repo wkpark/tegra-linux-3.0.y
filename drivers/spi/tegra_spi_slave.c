@@ -498,7 +498,7 @@ static void tegra_spi_workerthread(struct work_struct *w)
 	SPI_DEBUG_PRINT("tegra_spi_transfer end\n");
 }
 
-static int __init tegra_spi_probe(struct platform_device *pdev)
+static int __devinit tegra_spi_probe(struct platform_device *pdev)
 {
 	struct spi_master *master;
 	struct tegra_spi *spi;

@@ -344,7 +344,7 @@ static void led_brightness_set(struct led_classdev *led_cdev,
 
 #endif
 
-static int __init touchLED_probe(struct platform_device *pdev)
+static int __devinit touchLED_probe(struct platform_device *pdev)
 {
     s_touchLED.conn = NvOdmPeripheralGetGuid( NV_ODM_GUID('t','o','u','c','h','L','E','D') );
 
@@ -417,7 +417,7 @@ static int __init touchLED_probe(struct platform_device *pdev)
     return 0;
 }
 
-static int touchLED_remove(struct platform_device *pdev)
+static int __devexit touchLED_remove(struct platform_device *pdev)
 {
     //20101104, , WLED set [START]
     sysfs_remove_group(&pdev->dev.kobj, &star_wled_group);
@@ -453,7 +453,7 @@ static void touchLED_shutdown(struct  platform_device *pdev)
 
 static struct platform_driver touchLED_driver = {
     .probe      = touchLED_probe,
-    .remove     = touchLED_remove,
+    .remove     = __devexit_p(touchLED_remove),
     .shutdown	= touchLED_shutdown,
 #ifndef CONFIG_HAS_EARLYSUSPEND
     .suspend    = touchLED_suspend,

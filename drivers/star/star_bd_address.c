@@ -58,7 +58,7 @@ static DEVICE_ATTR(bdaddr_if, 0666, bd_address_show, bd_address_store);
     @date   2010.11.11
 */
 
-static int __exit bd_address_remove(struct platform_device *pdev)
+static int __devexit bd_address_remove(struct platform_device *pdev)
 {
 	return 0;
 }
@@ -68,7 +68,7 @@ static int __exit bd_address_remove(struct platform_device *pdev)
     @date   2010.11.11
 */
 
-static int __init bd_address_probe(struct platform_device *pdev)
+static int __devinit bd_address_probe(struct platform_device *pdev)
 {
 	int ret;
 
@@ -103,7 +103,7 @@ static int bd_address_resume(struct platform_device *pdev)
 
 static struct platform_driver bd_address_driver = {
 	.probe		= bd_address_probe,
-	.remove		= __exit_p(bd_address_remove),
+	.remove		= __devexit_p(bd_address_remove),
 	.suspend	= bd_address_suspend,
 	.resume		= bd_address_resume,
 	.driver		= {

@@ -157,7 +157,7 @@ static void star_hall_intr_handler( void *arg )
 	NvOdmGpioInterruptDone(g_hall->h_hall_intr);
 }
 
-static int __init star_hall_probe( struct platform_device *pdev )
+static int __devinit star_hall_probe( struct platform_device *pdev )
 {
 	int err = 0;
 	struct device *dev = &pdev->dev;

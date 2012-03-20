@@ -59,7 +59,7 @@ static int hdmi_reg_resume(struct platform_device *pdev)
     return 0;
 }
 
-static int __init hdmi_reg_probe(struct platform_device *pdev)
+static int __devinit hdmi_reg_probe(struct platform_device *pdev)
 {
     int ret;
     NvU32 pin, port;
@@ -93,7 +93,7 @@ err_probe_fail:
     return -ENOSYS;
 }
 
-static int hdmi_reg_remove(struct platform_device *pdev)
+static int __devexit hdmi_reg_remove(struct platform_device *pdev)
 {
     NvOdmGpioReleasePinHandle(s_hdmi_reg.gpioHandle, s_hdmi_reg.pinHandle);
     NvOdmGpioClose(s_hdmi_reg.gpioHandle); 
@@ -103,7 +103,7 @@ static int hdmi_reg_remove(struct platform_device *pdev)
 
 static struct platform_driver hdmi_reg_driver = {
     .probe      = hdmi_reg_probe,
-    .remove     = hdmi_reg_remove,
+    .remove     = __devexit_p(hdmi_reg_remove),
     .suspend    = hdmi_reg_suspend,
     .resume     = hdmi_reg_resume,
     .driver = {
