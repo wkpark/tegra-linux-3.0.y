@@ -1628,10 +1628,6 @@ static int tegra_battery_get_property(struct power_supply *psy,
 		case POWER_SUPPLY_PROP_STATUS:
 			if (batt_dev->BatteryGauge_on == NV_FALSE) // Not yet receive CBC from CP
 			{
-				tegra_at_command_parse(52407);
-			}
-			/*if (batt_dev->BatteryGauge_on == NV_FALSE) // Not yet receive CBC from CP
-			{
 				val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
 				LDB("[Warning] Cannot receive CBC from CP until now, Display Battery loading Icon!!");
 			}
