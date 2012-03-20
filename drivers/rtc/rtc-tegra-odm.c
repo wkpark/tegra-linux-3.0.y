@@ -29,6 +29,7 @@
 #include <linux/delay.h>
 #include <linux/rtc.h>
 #include <linux/bcd.h>
+#include <linux/sched.h>
 #include <linux/platform_device.h>
 #include "nvodm_pmu.h"
 #include <linux/semaphore.h> //ljs

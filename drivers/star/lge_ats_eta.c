@@ -17,6 +17,7 @@
 #include <linux/input.h>
 #include <linux/syscalls.h>
 #include <linux/fcntl.h>
+#include <linux/slab.h>
 
 struct ats_mtc_key_log_type{
     unsigned char log_id;

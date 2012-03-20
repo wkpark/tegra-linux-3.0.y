@@ -23,6 +23,7 @@
 #include <linux/input.h>
 #include <linux/workqueue.h>
 #include <linux/timer.h>
+#include <linux/slab.h>
 
 #define DRIVER_NAME "ats_event_log"
 

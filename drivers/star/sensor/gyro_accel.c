@@ -13,6 +13,7 @@
 #include <linux/input.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 #include <linux/i2c.h>
 #include <asm/gpio.h>
 #include <asm/system.h>
@@ -129,8 +130,12 @@ struct star_motion_device {
 static struct star_motion_device   *star_motion_dev = NULL;
 void magnetic_input_report(int *); /* wkkim magnetic repot */
 
+#ifndef write_lock
 #define write_lock(lock)		_write_lock(lock)
+#endif
+#ifndef read_lock
 #define read_lock(lock)			_read_lock(lock)
+#endif
 rwlock_t getbuflock;
 static unsigned char accelrwbuf[200] = {0,};    /* MPU3050 i2c MAX data length */
 static unsigned char rwbuf[200] = {0,};     	 /* MPU3050 i2c MAX data length */
@@ -1273,7 +1278,7 @@ static int star_motion_release(struct inode *inode, struct file *file)
 	return 0;
 }
 static int count = 0 ;
-static int star_motion_ioctl(struct inode *inode, struct file *file, unsigned int cmd,unsigned long arg)
+static long star_motion_ioctl(struct file *file, unsigned int cmd,unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
 	unsigned char data[MAX_MOTION_DATA_LENGTH]={0,};
@@ -1732,7 +1737,7 @@ static struct file_operations  star_motion_fops = {
 	.owner    = THIS_MODULE,
 	.open     = star_motion_open,
 	.release  = star_motion_release,
-	.ioctl    = star_motion_ioctl,
+	.unlocked_ioctl    = star_motion_ioctl,
 };
 
 static struct miscdevice  star_motion_misc_device = {
@@ -1753,7 +1758,7 @@ static int star_accel_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-static int star_accel_ioctl(struct inode *inode, struct file *file,
+static long star_accel_ioctl(struct file *file,
 		unsigned int cmd, unsigned long arg)
 {
 	void __user *argp = (void __user *)arg;
@@ -1875,7 +1880,7 @@ static int star_accel_ioctl(struct inode *inode, struct file *file,
 static struct file_operations  star_accel_fops = {
 	.owner    = THIS_MODULE,
 	.open     = star_accel_open,
-	.ioctl    = star_accel_ioctl,
+	.unlocked_ioctl    = star_accel_ioctl,
 };
 
 static struct miscdevice  star_accel_misc_device = {

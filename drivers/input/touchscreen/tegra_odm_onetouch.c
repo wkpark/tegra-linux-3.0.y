@@ -25,6 +25,7 @@
 #include <linux/platform_device.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
+#include <linux/slab.h>
 #include <linux/earlysuspend.h>
 #include <linux/freezer.h>
 //#include <linux/tegra_devices.h>

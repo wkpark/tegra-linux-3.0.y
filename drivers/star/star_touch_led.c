@@ -330,7 +330,7 @@ EXPORT_SYMBOL(keep_touch_led_on);
 
 #ifdef CONFIG_LEDS_CLASS
 
-static void led_brightness_set(struct led_classdev *led_cdev,
+static void _led_brightness_set(struct led_classdev *led_cdev,
                    enum led_brightness brightness)
 {
     long val = brightness*20*100/100/255;
@@ -396,7 +396,7 @@ static int __devinit touchLED_probe(struct platform_device *pdev)
 #ifdef CONFIG_LEDS_CLASS
     /* Add leds class support */
     s_touchLED.leddev.name = "buttonpanel";
-    s_touchLED.leddev.brightness_set = led_brightness_set;
+    s_touchLED.leddev.brightness_set = _led_brightness_set;
     s_touchLED.leddev.max_brightness = 255;
     s_touchLED.leddev.flags = 0;
     s_touchLED.pulse_interval = 0;

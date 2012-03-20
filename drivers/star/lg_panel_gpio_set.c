@@ -81,7 +81,7 @@ tegra_panel_gpio_set_release(struct inode *inode, struct file *file)
 }
 
 //20101208  GPIO ioctl [START]
-static int tegra_panel_gpio_set_ioctl(struct inode *inode, struct file *file,
+static long tegra_panel_gpio_set_ioctl(struct file *file,
 		unsigned int cmd, unsigned long arg)
 {
     void __user *argp = (void __user *)arg;
@@ -109,7 +109,7 @@ static struct file_operations tegra_panel_gpio_set_fops = {
     .release    = tegra_panel_gpio_set_release,
     .llseek     = tegra_panel_gpio_set_lseek, 
 //20101208  GPIO ioctl
-    .ioctl = tegra_panel_gpio_set_ioctl,
+    .unlocked_ioctl = tegra_panel_gpio_set_ioctl,
 };
 
 static struct miscdevice tegra_panel_gpio_set_device =
