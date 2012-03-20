@@ -114,7 +114,7 @@ static void star_vib_vibrating(NvBool on)
 }
 
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 NvOdmServicesPwmHandle hOdmPwm = NULL;
 
 NvBool star_vibrator_pwn_set(NvBool IsEnable)
@@ -152,7 +152,7 @@ static void star_vib_enable(NvBool is_enable)
         //star_vib_set_power_rail( g_vib->h_vib_pmu, g_vib->vdd_id, is_enable);
 		star_vib_vibrating(is_enable);
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 		star_vibrator_pwn_set(is_enable);
 #endif
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
@@ -160,7 +160,7 @@ static void star_vib_enable(NvBool is_enable)
         //star_vib_set_power_rail( g_vib->h_vib_pmu, g_vib->vdd_id, is_enable);
 		star_vib_vibrating(is_enable);
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 		star_vibrator_pwn_set(is_enable);
 #endif
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
@@ -179,7 +179,7 @@ static enum hrtimer_restart star_vib_timeout(struct hrtimer *timer)
 	pr_debug("[%s] enter timer function...\n", __func__);
 	pr_debug("vibrator off...\n");
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]	
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 	star_vib_vibrating(NV_FALSE);
 #else
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
@@ -213,7 +213,7 @@ static ssize_t star_vib_stay_store(struct device *dev, struct device_attribute *
 		if (value < 1000) {
 			timeout = (unsigned long)(value * 1000 * 1000);
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifndef CONFIG_MACH_STAR_SKT_REV_E
+#ifndef USE_PWN_SET
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
 			star_vib_enable(NV_TRUE);
 #endif
@@ -221,7 +221,7 @@ static ssize_t star_vib_stay_store(struct device *dev, struct device_attribute *
 		} else {
 			timeout = (long)value / 1000;
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifndef CONFIG_MACH_STAR_SKT_REV_E
+#ifndef USE_PWN_SET
 			star_vib_enable(NV_TRUE);
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
 #endif
@@ -251,7 +251,7 @@ static ssize_t star_vib_onoff_store(struct device *dev, struct device_attribute 
 	if (val) {
 		pr_debug("vibrator on...\n");
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 		star_vib_enable(val);
 #endif
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
@@ -374,7 +374,7 @@ static int __devinit star_vib_probe(struct platform_device *pdev)
 	}
 
 //20101112 sh80.choi@lge.com Call Vibrate Volume [START_LGE_LAB1]
-#ifdef CONFIG_MACH_STAR_SKT_REV_E
+#ifdef USE_PWN_SET
 	hOdmPwm = NvOdmPwmOpen();
 #endif
 //20101112 sh80.choi@lge.com Call Vibrate Volume [END_LGE_LAB1]
