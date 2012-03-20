@@ -196,7 +196,7 @@ static volatile int mux_file_flags[TS0710MAX_CHANNELS];
 static ts0710_con ts0710_connection;
 
 #ifdef LGE_KERNEL_MUX
-static DECLARE_MUTEX(spi_write_sema); /* use semaphore to synchronize different threads*/
+static DEFINE_SEMAPHORE(spi_write_sema); /* use semaphore to synchronize different threads*/
 struct spi_data_recived_struct {
     struct tty_struct *tty; 
     const u8 *data; 

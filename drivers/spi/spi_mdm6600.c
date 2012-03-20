@@ -30,7 +30,6 @@
 #include <linux/errno.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
-#include <linux/smp_lock.h>
 #include <asm/uaccess.h>
 #include <linux/irq.h>
 #include <mach/gpio.h>
@@ -73,7 +72,7 @@
 #define SPI_DEBUG_PRINT(format, args...) printk(format, ## args)
 #define SPI_LOG(format, args...) printk("[  SPI] : %s %d: " format "\n", __FUNCTION__, __LINE__, ## args)
 #else
-#if CONFIG_LPRINTK
+#ifdef CONFIG_LPRINTK
 #include <mach/lprintk.h> //20100426, , Change printk to lprintk
 #define SPI_DEBUG_PRINT(format, args...) lprintk(D_SPI, format, ## args)
 #define SPI_LOG(format, args...) lprintk(D_SPI, "%s %d: " format "\n", __FUNCTION__, __LINE__, ## args)
@@ -183,7 +182,7 @@ struct ifx_spi_data {
 	unsigned		users;
         unsigned int		throttle;
         struct work_struct      ifx_work;
-        struct work_queue_struct *ifx_wq;
+        struct workqueue_struct *ifx_wq;
 //20100811-1, , move global variables [START]
 	unsigned int		ifx_master_initiated_transfer;
 	unsigned int		ifx_spi_count;
