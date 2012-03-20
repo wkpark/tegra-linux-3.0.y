@@ -1411,29 +1411,6 @@ static int __init star_init_android_virtualkeys(void)
 }
 #endif
 
-#ifdef CONFIG_STAR_GYRO_ACCEL
-static struct platform_device tegra_accelerometer_device =
-{
-	.name = "tegra_accelerometer",
-	.id   = -1,
-};
-
-static struct platform_device tegra_gyro_accel_device =
-{
-	.name = "tegra_gyro_accel",
-	.id   = -1,
-};
-#endif
-
-//20100526 , For Compass Driver [start]
-#ifdef CONFIG_STAR_COMPASS
-static struct platform_device star_compass_device =
-{
-	.name = "tegra_compass",
-	.id	  = -1,
-};
-#endif
-
 // 20100917 jay.sim@lge.com, Temp for Sensor Modulazation --
 
 #ifdef CONFIG_TOUCHSCREEN_PANJIT_I2C
