@@ -25,6 +25,7 @@
 #include <linux/clocksource.h>
 #include <linux/clk.h>
 #include <linux/io.h>
+#include <linux/cnt32_to_63.h>
 
 #include <asm/mach/time.h>
 #include <asm/mach/time.h>
