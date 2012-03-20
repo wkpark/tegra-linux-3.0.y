@@ -224,7 +224,7 @@ static irqreturn_t host_wake_isr(int irq, void *dev)
 //We need disable the irq here
 
 	printk(KERN_ERR "BRCM_LPM: host_wake_isr host wake=%d\n",host_wake);
-	set_irq_type(bt_lpm.host_wake_irq, host_wake ? IRQF_TRIGGER_LOW : IRQF_TRIGGER_HIGH);
+	irq_set_irq_type(bt_lpm.host_wake_irq, host_wake ? IRQF_TRIGGER_LOW : IRQF_TRIGGER_HIGH);
 	schedule_work(&bt_lpm.host_wake_work);
 
 	return IRQ_HANDLED;
@@ -357,7 +357,7 @@ static int lbee9qmb_rfkill_btwake_probe(struct platform_device *pdev)
 	bt_lpm.check_hostwakeup_delay = ktime_set(5, 0);  /* 5 sec */
 	bt_lpm.check_hostwakeup_timer.function = check_hostwakeup;
 
-	set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
+	irq_set_irq_type(irq, IRQ_TYPE_EDGE_RISING);
 	
 	ret = request_irq(irq, host_wake_isr, 0,
 			"bt host_wake", NULL);
