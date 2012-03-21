@@ -35,13 +35,11 @@
 
 extern void tegra_secondary_startup(void);
 
-static DEFINE_SPINLOCK(boot_lock);
 static void __iomem *scu_base = IO_ADDRESS(TEGRA_ARM_PERIF_BASE);
 extern void __cortex_a9_restore(void);
 extern void __shut_off_mmu(void);
 
 #ifdef CONFIG_HOTPLUG_CPU
-static DEFINE_PER_CPU(struct completion, cpu_killed);
 extern void tegra_hotplug_startup(void);
 #endif
 
@@ -75,15 +73,6 @@ void __cpuinit platform_secondary_init(unsigned int cpu)
 #endif
 
 	gic_secondary_init(0);
-	/*
-	 * Synchronise with the boot thread.
-	 */
-	spin_lock(&boot_lock);
-#ifdef CONFIG_HOTPLUG_CPU
-	cpu_set(cpu, cpu_init_map);
-	INIT_COMPLETION(per_cpu(cpu_killed, cpu));
-#endif
-	spin_unlock(&boot_lock);
 }
 
 int __cpuinit boot_secondary(unsigned int cpu, struct task_struct *idle)
@@ -208,12 +197,6 @@ void __init platform_smp_prepare_cpus(unsigned int max_cpus)
 	for (i = 0; i < max_cpus; i++)
 		set_cpu_present(i, true);
 
-#ifdef CONFIG_HOTPLUG_CPU
-	for_each_present_cpu(i) {
-		init_completion(&per_cpu(cpu_killed, i));
-	}
-#endif
-
 	scu_enable(scu_base);
 }
 
@@ -226,26 +209,16 @@ void __cpuinit secondary_start_kernel(void);
 int platform_cpu_kill(unsigned int cpu)
 {
 	unsigned int reg;
-	int e;
 
-	e = wait_for_completion_timeout(&per_cpu(cpu_killed, cpu), 100);
-	printk(KERN_NOTICE "CPU%u: %s shutdown\n", cpu, (e) ? "clean":"forced");
+	do {
+		reg = readl(CLK_RST_CONTROLLER_RST_CPU_CMPLX_SET);
+		cpu_relax();
+	} while (!(reg & (1<<cpu)));
 
-	if (e) {
-		do {
-			reg = readl(CLK_RST_CONTROLLER_RST_CPU_CMPLX_SET);
-			cpu_relax();
-		} while (!(reg & (1<<cpu)));
-	} else {
-		writel(0x1111<<cpu, CLK_RST_CONTROLLER_RST_CPU_CMPLX_SET);
-		/* put flow controller in WAIT_EVENT mode */
-		writel(2<<29, IO_ADDRESS(TEGRA_FLOW_CTRL_BASE)+0x14 + 0x8*(cpu-1));
-	}
-	spin_lock(&boot_lock);
 	reg = readl(CLK_RST_CONTROLLER_CLK_CPU_CMPLX);
 	writel(reg | (1<<(8+cpu)), CLK_RST_CONTROLLER_CLK_CPU_CMPLX);
-	spin_unlock(&boot_lock);
-	return e;
+
+	return 1;
 }
 
 void platform_cpu_die(unsigned int cpu)
@@ -262,7 +235,6 @@ void platform_cpu_die(unsigned int cpu)
 
 	gic_cpu_exit(0);
 	barrier();
-	complete(&per_cpu(cpu_killed, cpu));
 	flush_cache_all();
 	barrier();
 	__cortex_a9_save(0);

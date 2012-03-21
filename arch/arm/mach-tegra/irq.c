@@ -94,6 +94,11 @@ static void tegra_eoi(struct irq_data *d)
 	writel(1<<(d->irq&31), addr+ICTLR_CPU_IEP_FIR_CLR);
 }
 
+static int tegra_set_wake(struct irq_data *data, unsigned int on)
+{
+	return 0; /* always allow wakeup */
+}
+
 static void syncpt_thresh_mask(struct irq_data *data)
 {
 	(void)data;
@@ -169,6 +174,7 @@ void __init tegra_init_irq(void)
 	gic_arch_extn.irq_eoi = tegra_eoi;
 	gic_arch_extn.irq_mask = tegra_mask;
 	gic_arch_extn.irq_unmask = tegra_unmask;
+	gic_arch_extn.irq_set_wake = tegra_set_wake;
 
 	gic_init(0, 29, IO_ADDRESS(TEGRA_ARM_INT_DIST_BASE),
 		IO_ADDRESS(TEGRA_ARM_PERIF_BASE + 0x100));
