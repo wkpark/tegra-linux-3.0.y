@@ -145,6 +145,7 @@ struct ehci_hcd {			/* one per controller */
 	unsigned		fs_i_thresh:1;	/* Intel iso scheduling */
 	unsigned		use_dummy_qh:1;	/* AMD Frame List table quirk*/
 	unsigned		has_synopsys_hc_bug:1; /* Synopsys HC */
+	unsigned		frame_index_bug:1; /* MosChip (AKA NetMos) */
 	unsigned		host_reinited:1; /* tegra */
 	unsigned		host_resumed:1; /* tegra */
 	struct work_struct	irq_work; /* tegra irq work for power control*/
@@ -765,6 +766,22 @@ static inline void ehci_sync_mem()
 static inline void ehci_sync_mem()
 {
 }
+#endif
+
+/*-------------------------------------------------------------------------*/
+
+#ifdef CONFIG_PCI
+
+/* For working around the MosChip frame-index-register bug */
+static unsigned ehci_read_frame_index(struct ehci_hcd *ehci);
+
+#else
+
+static inline unsigned ehci_read_frame_index(struct ehci_hcd *ehci)
+{
+	return ehci_readl(ehci, &ehci->regs->frame_index);
+}
+
 #endif
 
 /*-------------------------------------------------------------------------*/
