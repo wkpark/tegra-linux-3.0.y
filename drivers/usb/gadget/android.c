@@ -220,7 +220,11 @@ static int acm_function_init(struct android_usb_function *f, struct usb_composit
 	if (!f->config)
 		return -ENOMEM;
 
+#if defined(CONFIG_MACH_STAR)
+	return gserial_setup(cdev->gadget, 3);
+#else
 	return gserial_setup(cdev->gadget, MAX_ACM_INSTANCES);
+#endif
 }
 
 static void acm_function_cleanup(struct android_usb_function *f)
@@ -230,12 +234,17 @@ static void acm_function_cleanup(struct android_usb_function *f)
 	f->config = NULL;
 }
 
+#if defined(CONFIG_MACH_STAR)
+extern int gser_bind_config(struct usb_configuration *, u8);
+extern int gps_bind_config(struct usb_configuration *, u8);
+#endif
 static int acm_function_bind_config(struct android_usb_function *f, struct usb_configuration *c)
 {
 	int i;
 	int ret = 0;
 	struct acm_function_config *config = f->config;
 
+#if defined(CONFIG_MACH_STAR)
 	for (i = 0; i < config->instances; i++) {
 		ret = acm_bind_config(c, i);
 		if (ret) {
@@ -243,6 +252,13 @@ static int acm_function_bind_config(struct android_usb_function *f, struct usb_c
 			break;
 		}
 	}
+#else
+	ret = acm_bind_config(c, 0);
+	if (ret == 0)
+		ret = gser_bind_config(c, 1); /* bound to /dev/ttyGS1 */
+	if (ret == 0)
+		ret = gps_bind_config(c, 2); /* bound to /dev/ttyGS2 */
+#endif
 
 	return ret;
 }
