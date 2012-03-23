@@ -21,6 +21,18 @@
 #include "u_serial.h"
 #include "gadget_chips.h"
 
+/*
+ * 20101205, jm1.lee@lge.com, matching for LG Android Net Driver from vs660
+ *
+ * LG host driver use 16 bytes as max packet size of notify ep,
+ * but QCT use 10 bytes. Therefore we apply non-public patch for matching
+ * with LG host driver.
+ *
+ * TODO: This definition may be included into kernel configuration
+ */
+#ifdef CONFIG_MACH_STAR
+#define LG_ACM_FIX 1
+#endif
 
 /*
  * This CDC ACM function support just wraps control functions and
@@ -98,7 +110,11 @@ static inline struct f_acm *port_to_acm(struct gserial *p)
 /* notification endpoint uses smallish and infrequent fixed-size messages */
 
 #define GS_LOG2_NOTIFY_INTERVAL		5	/* 1 << 5 == 32 msec */
+#ifdef LG_ACM_FIX
+#define GS_NOTIFY_MAXPACKET		16	/* For LG host driver */
+#else
 #define GS_NOTIFY_MAXPACKET		10	/* notification + 2 bytes */
+#endif
 
 /* interface and class descriptors: */
 
@@ -464,15 +480,26 @@ static int acm_cdc_notify(struct f_acm *acm, u8 type, u16 value,
 	struct usb_ep			*ep = acm->notify;
 	struct usb_request		*req;
 	struct usb_cdc_notification	*notify;
+#ifndef LG_ACM_FIX
 	const unsigned			len = sizeof(*notify) + length;
+#endif
 	void				*buf;
 	int				status;
+
+#ifdef LG_ACM_FIX
+	unsigned char noti_buf[GS_NOTIFY_MAXPACKET];
+	memset(noti_buf, 0, GS_NOTIFY_MAXPACKET);
+#endif
 
 	req = acm->notify_req;
 	acm->notify_req = NULL;
 	acm->pending = false;
 
+#ifdef LG_ACM_FIX
+	req->length = GS_NOTIFY_MAXPACKET;
+#else
 	req->length = len;
+#endif
 	notify = req->buf;
 	buf = notify + 1;
 
@@ -482,7 +509,12 @@ static int acm_cdc_notify(struct f_acm *acm, u8 type, u16 value,
 	notify->wValue = cpu_to_le16(value);
 	notify->wIndex = cpu_to_le16(acm->ctrl_id);
 	notify->wLength = cpu_to_le16(length);
+#ifdef LG_ACM_FIX
+	memcpy(noti_buf, data, length);
+	memcpy(buf, noti_buf, GS_NOTIFY_MAXPACKET);
+#else
 	memcpy(buf, data, length);
+#endif
 
 	/* ep_queue() can complete immediately if it fills the fifo... */
 	spin_unlock(&acm->lock);
@@ -696,6 +728,11 @@ acm_unbind(struct usb_configuration *c, struct usb_function *f)
 	if (gadget_is_dualspeed(c->cdev->gadget))
 		usb_free_descriptors(f->hs_descriptors);
 	usb_free_descriptors(f->descriptors);
+
+#ifdef LG_ACM_FIX
+	/* This prevents kernel panic from acm patch */
+	if (acm->notify_req)
+#endif
 	gs_free_req(acm->notify, acm->notify_req);
 	kfree(acm->port.func.name);
 	kfree(acm);
