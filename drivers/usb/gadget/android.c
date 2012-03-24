@@ -244,7 +244,7 @@ static int acm_function_bind_config(struct android_usb_function *f, struct usb_c
 	int ret = 0;
 	struct acm_function_config *config = f->config;
 
-#if defined(CONFIG_MACH_STAR)
+#if !defined(CONFIG_MACH_STAR)
 	for (i = 0; i < config->instances; i++) {
 		ret = acm_bind_config(c, i);
 		if (ret) {
