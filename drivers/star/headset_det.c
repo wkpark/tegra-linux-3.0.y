@@ -416,7 +416,7 @@ static void headset_int_handler(void *dev_id)
 
 	if(headset_status == 0)
    	{
-        schedule_work(&headset_sw_data->delayed_work);
+		schedule_work(&headset_sw_data->work);
 		  #if defined(STAR_COUNTRY_KR) && !defined(CONFIG_MACH_STAR_SKT_REV_A)  
 			headset_Mic_Bias(0);
 		  #endif

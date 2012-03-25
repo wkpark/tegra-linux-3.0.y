@@ -31,7 +31,7 @@ char mBDAddr[13];
 static ssize_t bd_address_store(struct device *dev,struct device_attribute *attr,const char *buf, size_t count)
 {
     
-	sscanf(buf, "%s", &mBDAddr);
+	sscanf(buf, "%s", mBDAddr);
 
     return count;
 }

@@ -67,7 +67,7 @@ static int tegra_rtc_read_time(struct device *dev, struct rtc_time *tm)
 
 static int tegra_rtc_set_time(struct device *dev, struct rtc_time *tm)
 {
-	unsigned long prevTime;	
+	NvU32 prevTime;	
 	unsigned long now;
 	int ret;
 

@@ -1760,7 +1760,7 @@ static long star_accel_ioctl(struct file *file,
 #define CTRL_REG3		0x1D
 #define PC1_OFF			0x00
 	u8 ctrl[2] = { CTRL_REG1, PC1_OFF };
-	int err;
+	int err = 0;	// err is not initialized w/o calling kxtf9_update_odr
 	int tmp;
 	int xyz[3] = { 0 };
 	NvS32 x = 0, y = 0, z = 0;
