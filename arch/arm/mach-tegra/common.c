@@ -46,6 +46,7 @@
 
 //20110131, , Stop i2c comm during reset
 extern void NvRmPrivDvsStop(void);
+extern void write_cmd_reserved_buffer(unsigned char*, size_t);
 
 bool tegra_chip_compare(u32 chip, u32 major_rev, u32 minor_rev)
 {
@@ -187,8 +188,9 @@ EXPORT_SYMBOL_GPL(star_emergency_restart);
 extern int pwky_shutdown;
 static void tegra_machine_restart(char mode, const char *cmd)
 {
-   
 #if (CONFIG_MACH_STAR)
+	unsigned char tmpbuf[4] = { 0, };
+
 	//20110131, , Stop i2c comm during reset
 	NvOdmServicesPmuHandle h_pmu = NvOdmServicesPmuOpen();
 
@@ -233,6 +235,30 @@ static void tegra_machine_restart(char mode, const char *cmd)
 		
 	flush_cache_all();
 	outer_disable();
+
+#if defined (CONFIG_MACH_STAR)
+	if (cmd) {
+		strncpy(tmpbuf, cmd, 1);
+	} else {
+		tmpbuf[0] = 'w';
+	}
+
+	switch (tmpbuf[0]) {
+	case 'w':
+		break;
+#if defined (CONFIG_STAR_HIDDEN_RESET)
+	case 'h':
+		break;
+#endif
+	case 'p':
+		break;
+	default:
+		tmpbuf[0] ='w';
+		break;
+	}
+	write_cmd_reserved_buffer(tmpbuf,1);
+#endif
+
 	arm_machine_restart(mode, cmd);
 }
 
