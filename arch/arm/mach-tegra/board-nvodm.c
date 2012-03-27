@@ -49,6 +49,7 @@
 #endif /* CONFIG_MACH_STAR */
 //20100419  for headset detection [LGE_END]
 
+#include <asm/setup.h>
 #include <mach/iomap.h>
 #include <mach/io.h>
 #include <mach/pinmux.h>
@@ -1664,26 +1665,11 @@ static struct platform_device star_wm8994_pdevice =
 //20100704  jongik's headset porting [LGE_END]
 //20100701  crashdump [LGE_START]
 #if defined(CONFIG_ANDROID_RAM_CONSOLE)
-
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-#define RAM_CONSOLE_RESERVED_SIZE 2
-#else
-#define RAM_CONSOLE_RESERVED_SIZE 1
-#endif
-#define CARVEOUT_SIZE 128
-#define STAR_RAM_CONSOLE_BASE 	((512-CARVEOUT_SIZE-RAM_CONSOLE_RESERVED_SIZE)*SZ_1M)
-#ifdef CONFIG_MACH_STAR_TMUS
-#define STAR_RAM_CONSOLE_SIZE	(128*SZ_1K) 	
-#else
-#define STAR_RAM_CONSOLE_SIZE	(512*SZ_1K)
-#endif
 static struct resource ram_console_resource[] = {
-    {
-        .name = "ram_console",
-        .start = STAR_RAM_CONSOLE_BASE,
-        .end = STAR_RAM_CONSOLE_BASE + STAR_RAM_CONSOLE_SIZE - 1,
-        .flags  = IORESOURCE_MEM,
-    }
+        {
+                .name = "ram_console",
+                .flags  = IORESOURCE_MEM,
+        }
 };
 
 static struct platform_device ram_console_device = {
@@ -3063,3 +3049,67 @@ void tegra_board_nvodm_resume(void)
         tegra_pinmux_set_pullupdown(TEGRA_PINGROUP_SDD, TEGRA_PUPD_PULL_UP);
 #endif
 }
+
+void __init tegra_allocate_memory_regions(void)
+{
+#ifdef CONFIG_ANDROID_RAM_CONSOLE
+	struct membank *bank = &meminfo.bank[0];
+
+	pr_info("first bank start=%08llx, size=%5lu kB\n", (long long)bank->start, bank->size >> 10);
+
+	ram_console_resource[0].start = bank->start + bank->size;
+	ram_console_resource[0].end = ram_console_resource[0].start + STAR_RAM_CONSOLE_SIZE - 1;
+
+	pr_info("allocating %05x kB at 0x%08lx for ram_console\n",
+		STAR_RAM_CONSOLE_SIZE >> 10, ram_console_resource[0].start);
+#endif
+}
+
+#if defined(CONFIG_MACH_STAR) && defined(CONFIG_ANDROID_RAM_CONSOLE)
+void *reserved_buffer;
+
+static int __init init_reserved_buffer(void)
+{
+	size_t start;
+
+	start = ram_console_resource[0].end + 1;
+	reserved_buffer = ioremap(start, RAM_RESERVED_SIZE);
+	pr_info("%s: reserved_buffer virtual = 0x%08lx\n", __func__, reserved_buffer);
+	pr_info("%s: reserved_buffer physical= 0x%08lx\n", __func__, start);
+
+	return 0;
+}
+postcore_initcall(init_reserved_buffer);
+
+void write_cmd_reserved_buffer(unsigned char *buf, size_t len)
+{
+	memcpy(reserved_buffer, buf, len);
+}
+
+void read_cmd_reserved_buffer(unsigned char *buf, size_t len)
+{
+	memcpy(buf, reserved_buffer, len);
+}
+
+EXPORT_SYMBOL_GPL(write_cmd_reserved_buffer);
+EXPORT_SYMBOL_GPL(read_cmd_reserved_buffer);
+
+#if defined (CONFIG_STAR_HIDDEN_RESET)
+void write_screen_shot_reserved_buffer(unsigned char *buf, size_t len)
+{
+	printk("write_screen_shot_reserved_buffer address =%x + 32\n", reserved_buffer);
+
+	copy_from_user(reserved_buffer + 32, buf, 800*480*3);
+	//memcpy(reserved_buffer+32, buf, 800*480*3);
+}
+
+void read_screen_shot_reserved_buffer(unsigned char *buf, size_t len)
+{
+        copy_to_user(buf, reserved_buffer + 32, 800*480*3);
+	//memcpy(buf, reserved_buffer+32, 800*480*3);
+}
+
+EXPORT_SYMBOL_GPL(write_screen_shot_reserved_buffer);
+EXPORT_SYMBOL_GPL(read_screen_shot_reserved_buffer);
+#endif
+#endif

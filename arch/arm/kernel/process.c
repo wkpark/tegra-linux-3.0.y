@@ -127,40 +127,9 @@ void arm_machine_flush_console(void)
 {
 }
 #endif
-extern void write_cmd_reserved_buffer(unsigned char *buf, size_t len);
-
 
 void arm_machine_restart(char mode, const char *cmd)
 {
-
-#if defined (CONFIG_MACH_STAR)
-	unsigned char tmpbuf[2];
-        if (cmd)
-        {
-         strncpy(tmpbuf, cmd, 1);
-        }
-        else
-        {
-          tmpbuf[0] = 'w';
-        }
-
-	switch (tmpbuf[0])
-	{
-		case 'w':
-		break;
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-		case 'h':
-		break;
-#endif
-		case 'p':
-		break;
-		default:
-		tmpbuf[0] ='w';
-		break;
-	}
-	write_cmd_reserved_buffer(tmpbuf,1);
-#endif
-
 	/* Flush the console to make sure all the relevant messages make it
 	 * out to the console drivers */
 	arm_machine_flush_console();

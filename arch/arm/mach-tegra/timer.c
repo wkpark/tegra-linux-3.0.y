@@ -25,7 +25,6 @@
 #include <linux/clocksource.h>
 #include <linux/clk.h>
 #include <linux/io.h>
-#include <linux/cnt32_to_63.h>
 
 #include <asm/mach/time.h>
 #include <asm/mach/time.h>
@@ -305,14 +304,6 @@ void tegra_lp2_set_trigger(unsigned long cycles)
 		timer_writel(reg, TIMER4_BASE + TIMER_PTV);
 	}
 }
-
-//20110213, , sched_clock mismatch issue after deepsleep [START]
-void tegra_lp0_sched_clock_clear()
-{
-    cnt32_to_63_clear(0);
-}
-//20110213, , sched_clock mismatch issue after deepsleep [END]
-
 EXPORT_SYMBOL(tegra_lp2_set_trigger);
 
 unsigned long tegra_lp2_timer_remain(void)

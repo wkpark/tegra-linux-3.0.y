@@ -61,4 +61,21 @@ int ventana_wifi_status_register(void (*callback)(int card_present,
 #endif
 
 
+#ifdef CONFIG_MACH_STAR
+#ifdef CONFIG_STAR_HIDDEN_RESET
+#define RAM_CONSOLE_RESERVED_SIZE 2
+#define RAM_RESERVED_SIZE 3*512*SZ_1K
+#else
+#define RAM_CONSOLE_RESERVED_SIZE 1
+#define RAM_RESERVED_SIZE 100*SZ_1K
+#endif
+#define DEFAULT_CARVEOUT_SIZE 128
+#define STAR_DEFAULT_RAM_CONSOLE_BASE ((512 - DEFAULT_CARVEOUT_SIZE - RAM_CONSOLE_RESERVED_SIZE)*SZ_1M)
+#ifdef CONFIG_MACH_STAR_TMUS
+#define STAR_RAM_CONSOLE_SIZE	(128*SZ_1K) 	
+#else
+#define STAR_RAM_CONSOLE_SIZE	(512*SZ_1K)
+#endif
+#endif /* CONFIG_MACH_STAR */
+
 #endif

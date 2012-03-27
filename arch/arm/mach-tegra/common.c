@@ -25,6 +25,7 @@
 #include <asm/hardware/cache-l2x0.h>
 #include <asm/cacheflush.h>
 #include <asm/outercache.h>
+#include <asm/setup.h>
 
 #include <mach/iomap.h>
 #include <mach/dma.h>
@@ -46,6 +47,7 @@
 
 //20110131, , Stop i2c comm during reset
 extern void NvRmPrivDvsStop(void);
+extern void write_cmd_reserved_buffer(unsigned char*, size_t);
 
 bool tegra_chip_compare(u32 chip, u32 major_rev, u32 minor_rev)
 {
@@ -187,8 +189,9 @@ EXPORT_SYMBOL_GPL(star_emergency_restart);
 extern int pwky_shutdown;
 static void tegra_machine_restart(char mode, const char *cmd)
 {
-   
 #if (CONFIG_MACH_STAR)
+	unsigned char tmpbuf[4] = { 0, };
+
 	//20110131, , Stop i2c comm during reset
 	NvOdmServicesPmuHandle h_pmu = NvOdmServicesPmuOpen();
 
@@ -233,6 +236,51 @@ static void tegra_machine_restart(char mode, const char *cmd)
 		
 	flush_cache_all();
 	outer_disable();
+
+#if defined (CONFIG_MACH_STAR)
+	if (cmd) {
+		strncpy(tmpbuf, cmd, 1);
+	} else {
+		tmpbuf[0] = 'w';
+	}
+
+	switch (tmpbuf[0]) {
+	case 'w':
+		break;
+#if defined (CONFIG_STAR_HIDDEN_RESET)
+	case 'h':
+		break;
+#endif
+	case 'p':
+		break;
+	default:
+		tmpbuf[0] ='w';
+		break;
+	}
+	write_cmd_reserved_buffer(tmpbuf,1);
+
+	printk("%s: tmpbuf = %s\n",__func__, tmpbuf);
+
+	{
+		struct membank *bank = &meminfo.bank[0];
+		size_t base = bank->start + bank->size;
+		void *default_reserved_buffer;
+
+		/* Does it have different memeory layout ? */
+		if (base != STAR_DEFAULT_RAM_CONSOLE_BASE) {
+			/*
+			 * copy the warmboot information to the original
+			 * reserved_buffer area before shutdown
+			 */
+			base = STAR_DEFAULT_RAM_CONSOLE_BASE + STAR_RAM_CONSOLE_SIZE;
+			default_reserved_buffer = phys_to_virt(base);
+			pr_info("%s: copy warmboot info. to the original reserved buffer 0x%p\n",
+				__func__, default_reserved_buffer);
+			memcpy(default_reserved_buffer, tmpbuf, 1);
+		}
+	}
+#endif
+
 	arm_machine_restart(mode, cmd);
 }
 

@@ -550,6 +550,14 @@ static void __init tegra_generic_init(void)
 	tegra_setup_bluesleep_csr();
 }
 
+extern void __init tegra_allocate_memory_regions(void);
+static void __init tegra_map_io(void)
+{
+	tegra_map_common_io();
+
+	tegra_allocate_memory_regions();
+}
+
 MACHINE_START(VENTANA, "NVIDIA Ventana Development System")
 	.boot_params  = 0x00000100,
 	.fixup          = tegra_fixup,
@@ -577,6 +585,6 @@ MACHINE_START(TEGRA_GENERIC, "Tegra 2 Development System")
 	.init_irq       = tegra_init_irq,
 	.init_early     = tegra_init_early,
 	.init_machine   = tegra_generic_init,
-	.map_io         = tegra_map_common_io,
+	.map_io         = tegra_map_io,
 	.timer          = &tegra_timer,
 MACHINE_END
