@@ -218,7 +218,7 @@ static ssize_t star_vib_stay_show(struct device *dev, struct device_attribute *a
 	return sprintf(buf, "%d\n", time);	
 }
 
-static ssize_t star_vib_stay_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t star_vib_stay_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	int value;
 	unsigned long timeout;
@@ -267,7 +267,7 @@ static ssize_t star_vib_onoff_show(struct device *dev, struct device_attribute *
 }
 //spinlock_t vib_lock;
 #define MS_TO_NS(x)	(x * 1E6L)
-static ssize_t star_vib_onoff_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t star_vib_onoff_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	u32 val = 0;
 	unsigned int timeout = 0;

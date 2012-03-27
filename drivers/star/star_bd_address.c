@@ -41,7 +41,7 @@ static ssize_t bd_address_store(struct device *dev,struct device_attribute *attr
     @date   2010.11.08
 */
 
-static ssize_t bd_address_show(struct device *dev,struct device_attribute *attr,const char *buf, size_t count)
+static ssize_t bd_address_show(struct device *dev,struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf,"%c%c:%c%c:%c%c:%c%c:%c%c:%c%c\n",
 			mBDAddr[0], mBDAddr[1], mBDAddr[2],
