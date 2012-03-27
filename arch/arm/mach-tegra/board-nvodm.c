@@ -1665,25 +1665,6 @@ static struct platform_device star_wm8994_pdevice =
 //20100704  jongik's headset porting [LGE_END]
 //20100701  crashdump [LGE_START]
 #if defined(CONFIG_ANDROID_RAM_CONSOLE)
-
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-#define RAM_RESERVED_SIZE 3*512*1024
-#else
-#define RAM_RESERVED_SIZE 100*1024
-#endif
-
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-#define RAM_CONSOLE_RESERVED_SIZE 2
-#else
-#define RAM_CONSOLE_RESERVED_SIZE 1
-#endif
-#define CARVEOUT_SIZE 128
-#define STAR_RAM_CONSOLE_BASE 	((512-CARVEOUT_SIZE-RAM_CONSOLE_RESERVED_SIZE)*SZ_1M)
-#ifdef CONFIG_MACH_STAR_TMUS
-#define STAR_RAM_CONSOLE_SIZE	(128*SZ_1K) 	
-#else
-#define STAR_RAM_CONSOLE_SIZE	(512*SZ_1K)
-#endif
 static struct resource ram_console_resource[] = {
         {
                 .name = "ram_console",

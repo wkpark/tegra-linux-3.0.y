@@ -25,6 +25,7 @@
 #include <asm/hardware/cache-l2x0.h>
 #include <asm/cacheflush.h>
 #include <asm/outercache.h>
+#include <asm/setup.h>
 
 #include <mach/iomap.h>
 #include <mach/dma.h>
@@ -257,6 +258,27 @@ static void tegra_machine_restart(char mode, const char *cmd)
 		break;
 	}
 	write_cmd_reserved_buffer(tmpbuf,1);
+
+	printk("%s: tmpbuf = %s\n",__func__, tmpbuf);
+
+	{
+		struct membank *bank = &meminfo.bank[0];
+		size_t base = bank->start + bank->size;
+		void *default_reserved_buffer;
+
+		/* Does it have different memeory layout ? */
+		if (base != STAR_DEFAULT_RAM_CONSOLE_BASE) {
+			/*
+			 * copy the warmboot information to the original
+			 * reserved_buffer area before shutdown
+			 */
+			base = STAR_DEFAULT_RAM_CONSOLE_BASE + STAR_RAM_CONSOLE_SIZE;
+			default_reserved_buffer = phys_to_virt(base);
+			pr_info("%s: copy warmboot info. to the original reserved buffer 0x%p\n",
+				__func__, default_reserved_buffer);
+			memcpy(default_reserved_buffer, tmpbuf, 1);
+		}
+	}
 #endif
 
 	arm_machine_restart(mode, cmd);
