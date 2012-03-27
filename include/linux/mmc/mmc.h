@@ -319,9 +319,6 @@ struct _mmc_csd {
 #define EXT_CSD_CARD_TYPE_DDR_52       (EXT_CSD_CARD_TYPE_DDR_1_8V  \
 					| EXT_CSD_CARD_TYPE_DDR_1_2V)
 
-/* 20100901 taewan.kim@lge.com eMMC 4.4 Support */
-#define EXT_CSD_CARD_TYPE_DDR52 (1<<2)   /* Card can run at DDR 52MHz */
-
 #define EXT_CSD_BUS_WIDTH_1	0	/* Card is in 1 bit mode */
 #define EXT_CSD_BUS_WIDTH_4	1	/* Card is in 4 bit mode */
 #define EXT_CSD_BUS_WIDTH_8	2	/* Card is in 8 bit mode */
