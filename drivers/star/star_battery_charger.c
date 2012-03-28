@@ -780,35 +780,37 @@ static void star_capacity_from_voltage_via_calculate(void)
 
 	if ((batt_dev->ACLineStatus == NV_TRUE) && ((batt_dev->charger_state_machine == CHARGER_STATE_RECHARGE) || (batt_dev->charger_state_machine == CHARGER_STATE_CHARGE)))
 	{
-		if ( batt_dev->batt_vol <= 3828 )
+		if (batt_dev->batt_vol >= 4200) /* v >= 0 */
 		{
-			if (  batt_dev->batt_vol < 3656 )
-				calculate_capacity = 1;
-			else
-				calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3655943209)/6239571);
+			calculate_capacity = 100;
 		}
-		else if (( batt_dev->batt_vol > 3828 ) && ( batt_dev->batt_vol <= 3878 ))
+		else if (batt_dev->batt_vol >= 4050) /* 4050 <= v < 4200 : 80 - 100 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3814262889)/5230892);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 4050000)/7500 + 80);
 		}
-		else if (( batt_dev->batt_vol > 3878 ) && ( batt_dev->batt_vol <= 3943 ))
+		else if (batt_dev->batt_vol >= 3910) /* 3910 <= v < 4050 : 60 - 80 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3804342997)/6035547);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3910000)/7000 + 60);
 		}
-		else if (( batt_dev->batt_vol > 3943 ) && ( batt_dev->batt_vol <= 4005 ))
+		else if (batt_dev->batt_vol >= 3800) /* 3800 <= v < 3910 : 40 - 60 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3891922385)/2243847);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3800000)/5500 + 40);
 		}
-		else if (( batt_dev->batt_vol > 4005 ) && ( batt_dev->batt_vol <= 4133 ))
+		else if (batt_dev->batt_vol >= 3710) /* 3710 <= v < 3800 : 20 - 40 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3736359651)/5330744);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3710000)/4500 + 20);
 		}
-		else if ( batt_dev->batt_vol > 4133 )
+		else if (batt_dev->batt_vol >= 3605) /* 3605 <= v < 3710 : 5 - 20 */
 		{
-			if ( batt_dev->batt_vol >= 4200 )
-				calculate_capacity = 100;
-			else
-				calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3953389838)/2419419);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3605000)/7000 + 5);
+		}
+		else if (batt_dev->batt_vol >= 3392) /* 3392 <= v < 3605 : 1 - 5 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3392000)/53250 + 1);
+		}
+		else /* v < 3392 */
+		{
+			calculate_capacity = 1;
 		}
 
 		if ( calculate_capacity < 0 ) calculate_capacity = 1;
@@ -819,39 +821,37 @@ static void star_capacity_from_voltage_via_calculate(void)
 	}
 	else if ((batt_dev->ACLineStatus == NV_FALSE) || (batt_dev->charger_state_machine == CHARGER_STATE_FULLBATTERY))
 	{
-		if ( batt_dev->batt_vol >= 3970 )
+		if (batt_dev->batt_vol >= 4114) /* v >= 0 */
 		{
-			if ( batt_dev->batt_vol >= 4200 )
-				calculate_capacity = 100;
-			else
-				calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3223959227)/8766094);
+			calculate_capacity = 100;
 		}
-		else if (( batt_dev->batt_vol >= 3798 ) && ( batt_dev->batt_vol < 3970 ))
+		else if (batt_dev->batt_vol >= 3962) /* 3962 <= v < 4114 : 81 - 100 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3382701485)/6900848);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3962000)/8000 + 81);
 		}
-		else if (( batt_dev->batt_vol >= 3713 ) && ( batt_dev->batt_vol < 3798 ))
+		else if (batt_dev->batt_vol >= 3797) /* 3797 <= v < 3962 : 56 - 81 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3582377778)/3588889);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3797000)/6600 + 56);
 		}
-		else if (( batt_dev->batt_vol >= 3675 ) && ( batt_dev->batt_vol < 3713 ))
+		else if (batt_dev->batt_vol >= 3734) /* 3734 <= v < 3797 : 35 - 56 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3629265282)/2307994);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3734000)/3000 + 35);
 		}
-		else if (( batt_dev->batt_vol >= 3575 ) && ( batt_dev->batt_vol < 3675 ))
+		else if (batt_dev->batt_vol >= 3704) /* 3704 <= v < 3734 : 20 - 35 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3548445378)/6386555);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3704000)/2000 + 20);
 		}
-		else if (( batt_dev->batt_vol >= 3500 ) && ( batt_dev->batt_vol < 3675 ))
+		else if (batt_dev->batt_vol >= 3596) /* 3596 <= v < 3704 : 5 - 20 */
 		{
-			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3410416667)/39583333);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3596000)/7200 + 5);
 		}
-		else if ( batt_dev->batt_vol < 3500 )
+		else if (batt_dev->batt_vol >= 3392) /* 3392 <= v < 3596 : 1 - 5 */
 		{
-			if (  batt_dev->batt_vol <= 3400 )
-				calculate_capacity = 1;
-			else
-				calculate_capacity = (NvU32)((batt_dev->batt_vol*1000000 - 3300357143)/88214286);
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3392000)/51000 + 1);
+		}
+		else /* v < 3392 */
+		{
+			calculate_capacity = 1;
 		}
 
 		if ( calculate_capacity < 0 ) calculate_capacity = 1;
