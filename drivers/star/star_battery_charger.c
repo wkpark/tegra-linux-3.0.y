@@ -162,7 +162,11 @@ static enum power_supply_property tegra_battery_properties[] = {
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
-	POWER_SUPPLY_PROP_TEMP
+	POWER_SUPPLY_PROP_TEMP,
+	POWER_SUPPLY_PROP_VOLTAGE_MAX,
+	POWER_SUPPLY_PROP_VOLTAGE_MIN,
+	POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN,
+	POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN,
 };
 
 static enum power_supply_property tegra_power_properties[] = {
@@ -1623,15 +1627,18 @@ static int tegra_battery_get_property(struct power_supply *psy,
 	if (star_battery_test_mode == STAR_BATT_TEST_MODE_ON)
 		change_battery_value_for_test();
 
+	star_battery_infomation_update();
+	star_capacity_from_voltage_via_calculate();
+
 	switch (psp)
 	{
 		case POWER_SUPPLY_PROP_STATUS:
 			if (batt_dev->BatteryGauge_on == NV_FALSE) // Not yet receive CBC from CP
 			{
 				val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-				LDB("[Warning] Cannot receive CBC from CP until now, Display Battery loading Icon!!");
+				pr_debug("[Warning] Cannot receive CBC from CP until now, Display Battery loading Icon!!");
 			}
-			else if (batt_dev->present == NV_FALSE) // NVODM_BATTERY_STATUS_NO_BATTERY
+			if (batt_dev->present == NV_FALSE) // NVODM_BATTERY_STATUS_NO_BATTERY
 			{
 				val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
 				//LDB("[bat_poll] intval: NVODM_BATTERY_STATUS_NO_BATTERY(%d)", val->intval);
@@ -1686,11 +1693,21 @@ static int tegra_battery_get_property(struct power_supply *psy,
 			//LDB("[bat_poll] intval: POWER_SUPPLY_PROP_VOLTAGE_NOW(%d)", val->intval);
 			break;
 
+		case POWER_SUPPLY_PROP_VOLTAGE_MAX:
+		case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
+			val->intval = 4203;
+			break;
+
+		case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
+			val->intval = 3390;
+			break;
+
 		case POWER_SUPPLY_PROP_CAPACITY:
 			if (batt_dev->BatteryGauge_on == NV_TRUE)
 				val->intval = batt_dev->BatteryLifePercent;
 			else
-				val->intval = 999;
+				val->intval = batt_dev->Capacity_Voltage;
 			//LDB("[bat_poll] intval: POWER_SUPPLY_PROP_CAPACITY(%d)", val->intval);
 			break;
 
