@@ -98,7 +98,7 @@ static ssize_t star_hall_sensing_show(struct device *dev, struct device_attribut
 	return (ssize_t)(strlen(buf) + 1);
 }
 
-static ssize_t star_hall_sensing_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t star_hall_sensing_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 		
 }
@@ -108,7 +108,7 @@ static ssize_t star_hall_onoff_show(struct device *dev, struct device_attribute 
 	sprintf(buf, "%d\n", (power_enabled == true));
 	return (ssize_t)(strlen(buf) + 1);
 }
-static ssize_t star_hall_onoff_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t star_hall_onoff_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	u32 val = 0;
 	val = simple_strtoul(buf, NULL, 10);

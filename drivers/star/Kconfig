@@ -8,7 +8,14 @@ config STAR_BATTERY_CHARGER
 	depends on MACH_STAR
 	help
 	 Support for Battery & Charger Driver.
-	
+
+config STAR_BATTERY_UNIT_UV
+	bool "Battery Voltage unit in uV"
+	default n
+	depends on MACH_STAR
+	help
+	 Battery unit in uV
+
 config STAR_MUIC
 	bool "Star Muic MAXIM Driver"
 	default y

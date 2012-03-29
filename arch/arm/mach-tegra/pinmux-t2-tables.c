@@ -31,6 +31,8 @@
 #include <mach/pinmux.h>
 #include <mach/suspend.h>
 #include "gpio-names.h"
+static inline unsigned long pg_readl(unsigned long offset);
+static inline void pg_writel(unsigned long value, unsigned long offset);
 
 #define _mux(pg_name, f)				\
 	{						\

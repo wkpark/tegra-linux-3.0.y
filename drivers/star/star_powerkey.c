@@ -211,7 +211,7 @@ static ssize_t star_pmic_show(struct device *dev,
 }
 
 static ssize_t star_pmic_store(struct device *dev, 
-            struct device_attribute *attr, char *buf, size_t count)
+            struct device_attribute *attr, const char *buf, size_t count)
 {
     u32 val = 0;
 
@@ -352,7 +352,7 @@ static ssize_t star_reset_show(struct device *dev,
 extern int wdt_test;
 
 static ssize_t star_reset_store(struct device *dev, 
-            struct device_attribute *attr, char *buf, size_t count)
+            struct device_attribute *attr, const char *buf, size_t count)
 {
 
     unsigned char tmpbuf[3] = { NULL, };
@@ -378,7 +378,7 @@ static const struct attribute_group star_reset_group = {
 //extern void muic_gpio_interrupt_mask();
 extern void keep_touch_led_on();
 
-static ssize_t star_poweroff_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t star_poweroff_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
     u32 val = 0;
     unsigned char tmpbuf[3] = { NULL, };

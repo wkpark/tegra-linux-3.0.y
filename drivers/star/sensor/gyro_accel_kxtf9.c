@@ -126,14 +126,14 @@ void star_accel_disable_irq(void)
 	NvOdmGpioInterruptMask(g_accel->h_accel_intr, NV_TRUE);
 }
 
-static ssize_t motion_tap_onoff_show(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t motion_tap_onoff_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	u32    val;
 	val = atomic_read(&tap_flag);
 	return sprintf(buf, "%d\n",val);
 }
 
-static ssize_t motion_tap_onoff_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t motion_tap_onoff_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	u32    val;
 	val = simple_strtoul(buf, NULL, 10);
@@ -148,14 +148,14 @@ static ssize_t motion_tap_onoff_store(struct device *dev, struct device_attribut
 	return count;
 }
 
-static ssize_t motion_flip_onoff_show(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t motion_flip_onoff_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	u32    val;
 	val = atomic_read(&flip_flag);
 	return sprintf(buf, "%d\n",val);
 }
 
-static ssize_t motion_flip_onoff_store(struct device *dev, struct device_attribute *attr, char *buf, size_t count)
+static ssize_t motion_flip_onoff_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	u32    val;
 	val = simple_strtoul(buf, NULL, 10);
