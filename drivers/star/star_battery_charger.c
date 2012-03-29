@@ -105,6 +105,12 @@
 #define CBC_REQUEST_TIME_CRITICAL 480000 // ms
 #define GAUGE_FOLLOW_TIME	120 // second
 
+#if defined(CONFIG_STAR_BATTERY_UNIT_UV)
+#define STAR_VOLT_UNIT 1000
+#else
+#define STAR_VOLT_UNIT 1
+#endif
+
 typedef enum {
 	NvCharger_Type_Battery = 0,
 	NvCharger_Type_USB,
@@ -1689,18 +1695,18 @@ static int tegra_battery_get_property(struct power_supply *psy,
 			break;
 
 		case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-			val->intval = batt_dev->batt_vol * 1000;
+			val->intval = batt_dev->batt_vol * STAR_VOLT_UNIT;
 			//LDB("[bat_poll] intval: POWER_SUPPLY_PROP_VOLTAGE_NOW(%d)", val->intval);
 			break;
 
 		case POWER_SUPPLY_PROP_VOLTAGE_MAX:
 		case POWER_SUPPLY_PROP_VOLTAGE_MAX_DESIGN:
-			val->intval = 4203;
+			val->intval = 4203 * STAR_VOLT_UNIT;
 			break;
 
 		case POWER_SUPPLY_PROP_VOLTAGE_MIN:
 		case POWER_SUPPLY_PROP_VOLTAGE_MIN_DESIGN:
-			val->intval = 3390;
+			val->intval = 3390 * STAR_VOLT_UNIT;
 			break;
 
 		case POWER_SUPPLY_PROP_CAPACITY:
