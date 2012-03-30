@@ -784,6 +784,45 @@ static void star_capacity_from_voltage_via_calculate(void)
 {
 	NvU32	calculate_capacity = 0;
 
+	if (batt_dev->charging_source == NvCharger_Type_AC && batt_dev->ACLineStatus == NV_TRUE &&
+			((batt_dev->charger_state_machine == CHARGER_STATE_RECHARGE) || (batt_dev->charger_state_machine == CHARGER_STATE_CHARGE)))
+	{
+		if (batt_dev->batt_vol >= 4200) /* v >= 0 */
+		{
+			calculate_capacity = 100;
+		}
+		else if (batt_dev->batt_vol >= 4170) /* 4170 <= v < 4200 : 80 - 100 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 4170000)/1500 + 80);
+		}
+		else if (batt_dev->batt_vol >= 4128) /* 4128 <= v < 4170 : 60 - 80 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 4128000)/2100 + 60);
+		}
+		else if (batt_dev->batt_vol >= 4020) /* 4020 <= v < 4128 : 30 - 60 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 4020000)/3600 + 30);
+		}
+		else if (batt_dev->batt_vol >= 3910) /* 3910 <= v < 4020 : 4 - 30 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3910000)/4230 + 4);
+		}
+		else if (batt_dev->batt_vol >= 3832) /* 3832 <= v < 3910 : 1 - 4 */
+		{
+			calculate_capacity = (NvU32)((batt_dev->batt_vol*1000 - 3832000)/26000 + 1);
+		}
+		else /* v < 3832 */
+		{
+			calculate_capacity = 1;
+		}
+
+		if ( calculate_capacity < 0 ) calculate_capacity = 1;
+		if ( calculate_capacity > 100 ) calculate_capacity = 99;
+		batt_dev->Capacity_Voltage = calculate_capacity;
+
+		LDB("[CBC] : With AC Charger : CAL_CBC(%d)", calculate_capacity);
+	}
+	else
 	if ((batt_dev->ACLineStatus == NV_TRUE) && ((batt_dev->charger_state_machine == CHARGER_STATE_RECHARGE) || (batt_dev->charger_state_machine == CHARGER_STATE_CHARGE)))
 	{
 		if (batt_dev->batt_vol >= 4200) /* v >= 0 */
