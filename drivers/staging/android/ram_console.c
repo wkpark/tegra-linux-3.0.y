@@ -27,11 +27,6 @@
 #include <linux/rslib.h>
 #endif
 
-
-//20101110, jh.ahn@lge.com, Function for Warm-boot [START]
-void *reserved_buffer;
-//20101110, jh.ahn@lge.com, Function for Warm-boot [END]
-
 struct ram_console_buffer {
 	uint32_t    sig;
 	uint32_t    start;
@@ -350,11 +345,6 @@ static int ram_console_driver_probe(struct platform_device *pdev)
 	const char *bootinfo = NULL;
 	struct ram_console_platform_data *pdata = pdev->dev.platform_data;
 
-//20101110, jh.ahn@lge.com, Function for Warm-boot [START]
-        size_t reserved_start;
-        size_t reserved_size;
-//20101110, jh.ahn@lge.com, Function for Warm-boot [END]
-
 	if (res == NULL || pdev->num_resources != 1 ||
 	    !(res->flags & IORESOURCE_MEM)) {
 		printk(KERN_ERR "ram_console: invalid resource, %p %d flags "
@@ -374,65 +364,8 @@ static int ram_console_driver_probe(struct platform_device *pdev)
 	if (pdata)
 		bootinfo = pdata->bootinfo;
 
-#if 1
-       //fix it
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-       #define RAM_RESERVED_SIZE 3*512*1024
-#else
-       #define RAM_RESERVED_SIZE 100*1024
-#endif
-       reserved_start = start+ buffer_size;
-       reserved_buffer = ioremap(reserved_start, RAM_RESERVED_SIZE);
-       //memset(reserved_buffer, 0x00, 100*1024);
-       printk ("ram console : ram_console virtual addr = 0x%x \n", buffer);
-       printk ("ram console : reserved_buffer virtual = 0x%x \n", reserved_buffer);
-       printk ("ram console : reserved_buffer physical= 0x%x \n", reserved_start);
- 
-#endif
-
 	return ram_console_init(buffer, buffer_size, bootinfo, NULL/* allocate */);
 }
-
-/* 
-void *get_reserved_buffer()
-{
-	return reserved_buffer;
-}
-*/
-
-void write_cmd_reserved_buffer(unsigned char *buf, size_t len)
-{
-	memcpy(reserved_buffer, buf, len);
-}
-
-void read_cmd_reserved_buffer(unsigned char *buf, size_t len)
-{
-	memcpy(buf, reserved_buffer, len);
-}
-
-EXPORT_SYMBOL_GPL(write_cmd_reserved_buffer);
-EXPORT_SYMBOL_GPL(read_cmd_reserved_buffer);
-#if defined (CONFIG_STAR_HIDDEN_RESET)
-void write_screen_shot_reserved_buffer(unsigned char *buf, size_t len)
-{
-	printk("write_screen_shot_reserved_buffer address =%x + 32\n",reserved_buffer);
-
-
-	copy_from_user(reserved_buffer+32, buf, 800*480*3);
-	//memcpy(reserved_buffer+32, buf, 800*480*3);
-}
-
-void read_screen_shot_reserved_buffer(unsigned char *buf, size_t len)
-{
-
-        copy_to_user(buf ,reserved_buffer+32,800*480*3);	
-	//memcpy(buf, reserved_buffer+32, 800*480*3);
-	
-}
-EXPORT_SYMBOL_GPL(write_screen_shot_reserved_buffer);
-EXPORT_SYMBOL_GPL(read_screen_shot_reserved_buffer);
-
-#endif
 
 static struct platform_driver ram_console_driver = {
 	.probe = ram_console_driver_probe,

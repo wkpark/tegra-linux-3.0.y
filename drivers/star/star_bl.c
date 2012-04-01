@@ -1034,7 +1034,7 @@ star_show_panel_info(struct device *dev, struct device_attribute *attr, char *bu
 }
 
 static ssize_t
-star_store_panel_info(struct device *dev, struct device_attribute *attr, char *buf, size_t count )
+star_store_panel_info(struct device *dev, struct device_attribute *attr, const char *buf, size_t count )
 {
 	return 0;
 }

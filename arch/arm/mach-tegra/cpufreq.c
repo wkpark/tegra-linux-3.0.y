@@ -33,9 +33,6 @@
 #include <linux/kthread.h>
 #include <linux/workqueue.h>
 #include <linux/suspend.h>
-// 20100728 related deepsleep wakeup delay, (NVIDIA john moser) [START]
-#include <linux/delay.h>
-// 20100728  related deepsleep wakeup delay, (NVIDIA john moser) [END]
 #include <linux/reboot.h>
 #include <linux/delay.h>
 
