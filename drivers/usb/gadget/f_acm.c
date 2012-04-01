@@ -842,8 +842,21 @@ static struct platform_driver acm_platform_driver = {
 	.probe = acm_probe,
 };
 
+#if defined(CONFIG_MACH_STAR)
+extern int gser_bind_config(struct usb_configuration *, u8);
+extern int gps_bind_config(struct usb_configuration *, u8);
+#endif
 int acm_function_bind_config(struct usb_configuration *c)
 {
+#ifdef CONFIG_MACH_STAR
+	int ret = acm_bind_config(c, 0);
+	if (ret == 0)
+		ret = gser_bind_config(c, 1); /* bound to /dev/ttyGS1 */
+	if (ret == 0)
+		ret = gps_bind_config(c, 2); /* bound to /dev/ttyGS2 */
+	if (ret == 0)
+		ret = gserial_setup(c->cdev->gadget, 3);
+#else
 	int i;
 	u8 num_inst = acm_pdata ? acm_pdata->num_inst : 1;
 	int ret = gserial_setup(c->cdev->gadget, num_inst);
@@ -858,7 +871,7 @@ int acm_function_bind_config(struct usb_configuration *c)
 			break;
 		}
 	}
-
+#endif
 	return ret;
 }
 
