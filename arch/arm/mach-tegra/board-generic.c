@@ -230,7 +230,7 @@ static struct usb_mass_storage_platform_data tegra_usb_fsg_platform = {
 #endif
 //20100710, change mass storage device information [END]
 	.nluns = 2,
-	.bulk_size = 16384,
+	//.bulk_size = 16384,
 };
 static struct platform_device tegra_usb_fsg_device = {
 	.name = "usb_mass_storage",
